@@ -1,0 +1,5 @@
+{
+  "name": "SciDigitize AI",
+  "description": "A scientific data extraction tool that converts chart images into reusable CSV data using advanced AI vision.",
+  "requestFramePermissions": []
+}
