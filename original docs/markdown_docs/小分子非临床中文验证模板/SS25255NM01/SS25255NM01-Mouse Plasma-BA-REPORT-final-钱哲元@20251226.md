@@ -4,6 +4,9 @@
 - **Original File**: `小分子非临床中文验证模板/SS25255NM01/SS25255NM01-Mouse Plasma-BA-REPORT-final-钱哲元@20251226.docx`
 - **Type**: .docx
 
+## Summary
+Final Bioanalytical Validation Report for study SS25255NM01. Documents the partial validation results of the LC-MS/MS method for free Dxd and free T785 (QHL-1031 Payload) in BALB/c nude mouse plasma. Confirms successful validation of parameters: System Suitability, Carryover, Linearity (1.5-1500 pmol/mL), Intra-batch Precision & Accuracy, and Short-term Stability (16h in ice-water bath).
+
 ## Content
 验证报告
 

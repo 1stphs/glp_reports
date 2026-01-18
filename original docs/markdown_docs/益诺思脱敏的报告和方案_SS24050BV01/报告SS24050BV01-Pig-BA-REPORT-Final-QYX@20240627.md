@@ -4,6 +4,9 @@
 - **Original File**: `益诺思脱敏的报告和方案_SS24050BV01/报告SS24050BV01-Pig-BA-REPORT-Final-QYX@20240627.docx`
 - **Type**: .docx
 
+## Summary
+Final bioanalytical validation report for study SS24050BV01. Validates the LC-MS/MS method for determining 810Z00-T in Bama Minipig EDTA-K2 plasma. Confirms the method meets GLP requirements with a linear range of 50.000~25000.000 pg/mL. Covers all validation parameters including accuracy, precision, selectivity, recovery, and comprehensive stability.
+
 ## Content
 验证报告
 

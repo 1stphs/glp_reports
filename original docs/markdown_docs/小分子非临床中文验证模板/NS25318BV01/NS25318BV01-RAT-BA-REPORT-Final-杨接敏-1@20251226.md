@@ -4,6 +4,9 @@
 - **Original File**: `小分子非临床中文验证模板/NS25318BV01/NS25318BV01-RAT-BA-REPORT-Final-杨接敏-1@20251226.docx`
 - **Type**: .docx
 
+## Summary
+Final GLP validation report for the LC-MS/MS quantification of Abaloparatide in SD Rat plasma. Validated range 0.100-50.000 ng/mL. Covers full method validation including selectivity, matrix effect, recovery, and comprehensive stability demonstrating method robustness for PK studies.
+
 ## Content
 验证报告
 

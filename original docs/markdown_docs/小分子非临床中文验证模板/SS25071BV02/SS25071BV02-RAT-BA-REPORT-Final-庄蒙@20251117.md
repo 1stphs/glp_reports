@@ -4,6 +4,9 @@
 - **Original File**: `小分子非临床中文验证模板/SS25071BV02/SS25071BV02-RAT-BA-REPORT-Final-庄蒙@20251117.docx`
 - **Type**: .docx
 
+## Summary
+Final bioanalytical validation report for study SS25071BV02. Despite the term "RAT" in the filename, the report documents the validation of an LC-MS/MS method for determining Analyte A (FB7013, free form, antisense and sense strands) in **Cynomolgus Monkey** EDTA-K2 plasma. Key contents include GLP compliance, study details, materials, method SS25071-BA-002, and validation results for all parameters (selectivity, specificity, linearity, A&P, recovery, stability, etc.).
+
 ## Content
 验证报告
 

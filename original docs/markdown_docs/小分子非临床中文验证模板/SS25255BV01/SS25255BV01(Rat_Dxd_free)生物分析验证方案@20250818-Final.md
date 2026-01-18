@@ -4,6 +4,12 @@
 - **Original File**: `小分子非临床中文验证模板/SS25255BV01/SS25255BV01(Rat_Dxd_free)生物分析验证方案@20250818-Final.docx`
 - **Type**: .docx
 
+## Summary
+Validation protocol for study SS25255BV01. This is a partial validation plan for the LC-MS/MS method (SS24160-BA-002) to determine free Dxd in SD rat EDTA-K2 plasma. The primary objective is to validate the stability of free Dxd in the presence of "Potential Drug A" to support non-clinical co-administration studies.
+
+## ContentSummary
+Final Bioanalytical Validation Protocol for study SS25255BV01. Outlines the plan for the partial validation of an LC-MS/MS method for free Dxd in rat plasma, specifically focusing on stability assessment in the presence of 潜在药物A. Sections include study objectives, personnel, schedule (Aug-Nov 2025), regulatory compliance, materials, method overview, validation experimental design, and acceptance criteria.
+
 ## Content
 验证方案
 

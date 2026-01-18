@@ -4,6 +4,9 @@
 - **Original File**: `小分子非临床中文验证模板/SS25071BV01/SS25071BV01-RAT-BA-REPORT-final-庄蒙@20250929.docx`
 - **Type**: .docx
 
+## Summary
+Final bioanalytical validation report for study SS25071BV01. Documents the GLP-compliant validation of the LC-MS/MS method for determining RESS25071 (antisense and sense) in SD rat plasma. Includes QA statement, experimental procedures, full validation results, conclusions, and appendices.
+
 ## Content
 验证报告
 
