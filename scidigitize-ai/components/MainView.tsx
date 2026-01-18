@@ -60,7 +60,7 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
   const activeName = viewingSubItem ? `Item from ${selectedFile.file.name}` : selectedFile.file.name;
   const activePreview = viewingSubItem ? viewingSubItem.previewUrl : selectedFile.previewUrl;
 
-  const dataType = activeResult?.dataType;
+  const dataType = activeResult?.dataType || viewingSubItem?.type;
 
   const handleDownloadCSV = () => {
     if (!activeResult) return;
@@ -143,7 +143,7 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
             <h2 className="font-semibold text-slate-800 flex items-center gap-2 truncate max-w-md">
               {activeName}
             </h2>
-            {activeResult && (
+            {(activeResult || viewingSubItem) && (
               <div className="flex flex-col mt-0.5">
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase
@@ -155,9 +155,10 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
                     {dataType === 'r_stat' ? 'R-Grade Medical Stats' :
                       dataType === 'complex_table' ? 'Complex Tables' :
                         dataType === 'chart' ? 'Standard Data Viz' :
-                          'Infographics'}
+                          dataType === 'standard_chart' ? 'Standard Data Viz' :
+                            'Infographics'}
                   </span>
-                  <span className="text-[10px] text-slate-400">Confidence: {activeResult.confidence}%</span>
+                  {activeResult && <span className="text-[10px] text-slate-400">Confidence: {activeResult.confidence}%</span>}
                 </div>
                 {viewingSubItem?.reason && (
                   <span className="text-[10px] text-slate-500 italic mt-0.5">
@@ -168,19 +169,19 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
             )}
           </div>
         </div>
-      </div>
 
-      {activeResult && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Download {dataType === 'infographic' ? 'Text' : 'CSV'}
-          </button>
-        </div>
-      )}
+        {activeResult && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadCSV}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download {dataType === 'infographic' ? 'Text' : 'CSV'}
+            </button>
+          </div>
+        )}
+      </div>
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
         {activeStatus === 'processing' ? (

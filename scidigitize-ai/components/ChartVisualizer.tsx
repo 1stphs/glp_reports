@@ -15,21 +15,23 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
     return <div className="flex items-center justify-center h-full text-slate-400">Not a chart data type</div>;
   }
 
-  const { 
-    chartType, 
-    dataPoints, 
-    xAxisLabel, 
-    yAxisLabel, 
-    xAxisConfig, 
+  const {
+    chartType,
+    dataPoints,
+    xAxisLabel,
+    yAxisLabel,
+    xAxisConfig,
     yAxisConfig,
     referenceLines = [],
-    annotations = []
+    annotations = [],
+    colors: extractedColors,
+    aspectRatio
   } = data as ExtractedChartData;
 
   // Group data by series if available
   const seriesGroups: { [key: string]: any[] } = {};
   const hasMultipleSeries = dataPoints.some(p => p.series);
-  
+
   if (hasMultipleSeries) {
     dataPoints.forEach(p => {
       const s = p.series || 'Default';
@@ -40,12 +42,14 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
     seriesGroups['Default'] = dataPoints;
   }
 
-  const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+  // Use extracted colors if available, otherwise fallback to default palette
+  const defaultColors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+  const chartColors = (extractedColors && extractedColors.length > 0) ? extractedColors : defaultColors;
 
   // Helper to determine axis domain and scale properties
   const getAxisProps = (axisConfig?: { min?: number, max?: number, scaleType?: 'linear' | 'log' }, isX: boolean = false) => {
     const props: any = {};
-    
+
     if (axisConfig) {
       if (axisConfig.min !== undefined && axisConfig.max !== undefined) {
         props.domain = [axisConfig.min, axisConfig.max];
@@ -58,7 +62,7 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
         props.scale = 'log';
       }
     }
-    
+
     return props;
   };
 
@@ -68,10 +72,10 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
   const CommonAxis = () => (
     <>
       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-      <XAxis 
-        type={typeof dataPoints[0]?.x === 'number' ? 'number' : 'category'} 
-        dataKey="x" 
-        name={xAxisLabel} 
+      <XAxis
+        type={typeof dataPoints[0]?.x === 'number' ? 'number' : 'category'}
+        dataKey="x"
+        name={xAxisLabel}
         stroke="#64748b"
         fontSize={12}
         tickLine={false}
@@ -79,76 +83,76 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
         label={{ value: xAxisLabel, position: 'bottom', offset: 0, fill: '#64748b', fontSize: 12 }}
         {...xAxisProps}
       />
-      <YAxis 
-        type="number" 
-        dataKey="y" 
-        name={yAxisLabel} 
-        stroke="#64748b" 
+      <YAxis
+        type="number"
+        dataKey="y"
+        name={yAxisLabel}
+        stroke="#64748b"
         fontSize={12}
         tickLine={false}
         axisLine={{ stroke: '#cbd5e1' }}
         label={{ value: yAxisLabel, angle: -90, position: 'left', fill: '#64748b', fontSize: 12 }}
         {...yAxisProps}
       />
-      <Tooltip 
+      <Tooltip
         cursor={{ strokeDasharray: '3 3' }}
         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
         formatter={(value: any, name: any, props: any) => {
-            const pointLabel = props.payload.label;
-            return [value, pointLabel ? `${name} (${pointLabel})` : name];
+          const pointLabel = props.payload.label;
+          return [value, pointLabel ? `${name} (${pointLabel})` : name];
         }}
       />
       <Legend />
-      
+
       {/* Reference Lines */}
       {referenceLines.map((line, idx) => (
-        <ReferenceLine 
+        <ReferenceLine
           key={`ref-${idx}`}
           x={line.axis === 'x' ? line.value : undefined}
           y={line.axis === 'y' ? line.value : undefined}
           stroke={line.color || '#94a3b8'}
           strokeDasharray={line.lineStyle === 'dashed' ? '5 5' : line.lineStyle === 'dotted' ? '3 3' : ''}
-          label={{ 
-            value: line.label, 
+          label={{
+            value: line.label,
             position: line.axis === 'y' ? 'insideTopRight' : 'insideTopRight',
-            fill: '#64748b', 
-            fontSize: 10 
+            fill: '#64748b',
+            fontSize: 10
           }}
         />
       ))}
 
       {/* Annotations using ReferenceDot (invisible dot with label) */}
       {annotations.map((anno, idx) => (
-         <ReferenceDot 
-            key={`anno-${idx}`}
-            x={anno.x}
-            y={anno.y}
-            r={0}
-            fill="none"
-            stroke="none"
-            label={{ 
-                value: anno.text, 
-                position: 'top', 
-                fill: '#ef4444', 
-                fontWeight: 'bold',
-                fontSize: 11
-            }}
-         />
+        <ReferenceDot
+          key={`anno-${idx}`}
+          x={anno.x}
+          y={anno.y}
+          r={0}
+          fill="none"
+          stroke="none"
+          label={{
+            value: anno.text,
+            position: 'top',
+            fill: '#ef4444',
+            fontWeight: 'bold',
+            fontSize: 11
+          }}
+        />
       ))}
     </>
   );
 
   if (chartType === 'scatter') {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" aspect={aspectRatio}>
         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <CommonAxis />
           {Object.keys(seriesGroups).map((seriesName, index) => (
-            <Scatter 
-              key={seriesName} 
-              name={seriesName} 
-              data={seriesGroups[seriesName]} 
-              fill={colors[index % colors.length]} 
+            <Scatter
+              key={seriesName}
+              name={seriesName}
+              data={seriesGroups[seriesName]}
+              fill={chartColors[index % chartColors.length]}
             />
           ))}
         </ScatterChart>
@@ -158,10 +162,10 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
 
   if (chartType === 'bar') {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" aspect={aspectRatio}>
         <BarChart data={dataPoints} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <CommonAxis />
-           <Bar dataKey="y" fill={colors[0]} name={yAxisLabel} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="y" fill={chartColors[0]} name={yAxisLabel} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -171,76 +175,76 @@ const ChartVisualizer: React.FC<ChartVisualizerProps> = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-         <XAxis 
-            dataKey="x" 
-            type={typeof dataPoints[0]?.x === 'number' ? 'number' : 'category'} 
-            allowDuplicatedCategory={false}
-            stroke="#64748b"
-            fontSize={12}
-            {...xAxisProps}
-          />
-         <YAxis 
-            stroke="#64748b" 
-            fontSize={12} 
-            {...yAxisProps}
-         />
-         <Tooltip />
-         <Legend />
-         
-         {/* Render Reference Lines & Annotations again for Line Chart specifically if needed, 
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        <XAxis
+          dataKey="x"
+          type={typeof dataPoints[0]?.x === 'number' ? 'number' : 'category'}
+          allowDuplicatedCategory={false}
+          stroke="#64748b"
+          fontSize={12}
+          {...xAxisProps}
+        />
+        <YAxis
+          stroke="#64748b"
+          fontSize={12}
+          {...yAxisProps}
+        />
+        <Tooltip />
+        <Legend />
+
+        {/* Render Reference Lines & Annotations again for Line Chart specifically if needed, 
              but typically CommonAxis children don't work inside LineChart as direct children the same way 
              ScatterChart does. We need to duplicate children here or structured differently.
              Recharts architecture allows ReferenceLine inside LineChart.
          */}
-         
-         {referenceLines.map((line, idx) => (
-            <ReferenceLine 
+
+        {referenceLines.map((line, idx) => (
+          <ReferenceLine
             key={`ref-${idx}`}
             x={line.axis === 'x' ? line.value : undefined}
             y={line.axis === 'y' ? line.value : undefined}
             stroke={line.color || '#94a3b8'}
             strokeDasharray={line.lineStyle === 'dashed' ? '5 5' : line.lineStyle === 'dotted' ? '3 3' : ''}
-            label={{ 
-                value: line.label, 
-                position: 'insideTopRight',
-                fill: '#64748b', 
-                fontSize: 10 
+            label={{
+              value: line.label,
+              position: 'insideTopRight',
+              fill: '#64748b',
+              fontSize: 10
             }}
-            />
+          />
         ))}
 
         {annotations.map((anno, idx) => (
-            <ReferenceDot 
-                key={`anno-${idx}`}
-                x={anno.x}
-                y={anno.y}
-                r={3} // Small dot to show location
-                fill="#ef4444"
-                stroke="none"
-                label={{ 
-                    value: anno.text, 
-                    position: 'top', 
-                    fill: '#ef4444', 
-                    fontWeight: 'bold',
-                    fontSize: 11
-                }}
-            />
+          <ReferenceDot
+            key={`anno-${idx}`}
+            x={anno.x}
+            y={anno.y}
+            r={3} // Small dot to show location
+            fill="#ef4444"
+            stroke="none"
+            label={{
+              value: anno.text,
+              position: 'top',
+              fill: '#ef4444',
+              fontWeight: 'bold',
+              fontSize: 11
+            }}
+          />
         ))}
 
-         {Object.keys(seriesGroups).map((seriesName, index) => (
-            <Line
-              key={seriesName}
-              data={seriesGroups[seriesName]}
-              type="monotone"
-              dataKey="y"
-              name={seriesName}
-              stroke={colors[index % colors.length]}
-              strokeWidth={2}
-              dot={{ r: 4, fill: colors[index % colors.length] }}
-              activeDot={{ r: 6 }}
-            />
-         ))}
+        {Object.keys(seriesGroups).map((seriesName, index) => (
+          <Line
+            key={seriesName}
+            data={seriesGroups[seriesName]}
+            type="monotone"
+            dataKey="y"
+            name={seriesName}
+            stroke={chartColors[index % chartColors.length]}
+            strokeWidth={2}
+            dot={{ r: 4, fill: chartColors[index % chartColors.length] }}
+            activeDot={{ r: 6 }}
+          />
+        ))}
       </LineChart>
     </ResponsiveContainer>
   );
