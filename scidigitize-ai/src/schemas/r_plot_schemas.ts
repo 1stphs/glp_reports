@@ -2,9 +2,11 @@ export type JournalTheme = 'NEJM' | 'LANCET' | 'NATURE' | 'JCO' | 'Simple';
 
 export interface BaseStyleConfig {
     journal_theme: JournalTheme;
-    palette?: string[];
+    palette?: string[]; // Standard palette Name (e.g. "nejm")
+    custom_palette?: string[]; // Explicit Hex Codes (e.g. ["#FF0000", "#00FF00"])
     font_family?: string;
     legend_position?: 'top' | 'bottom' | 'right' | 'none';
+    aspect_ratio?: number; // e.g. 1.6 for wide, 0.8 for tall
 }
 
 // --- Module 1: Survival ---

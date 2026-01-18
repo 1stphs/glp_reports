@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData, ExtractedRStatData, DetectionType } from "../types";
+import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData, ExtractedRStatData, DetectionType, DetectedItem } from "../types";
 
 // Helper to convert file to base64
 export const fileToGenerativePart = async (file: File): Promise<string> => {
@@ -14,13 +14,6 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 };
-
-interface DetectedItem {
-  box_2d: [number, number, number, number];
-  label: string;
-  type: DetectionType;
-  caption: string;
-}
 
 // 1. Discovery Phase (Updated for 4-Tier)
 export const detectChartsInPage = async (base64Image: string): Promise<DetectedItem[]> => {
@@ -58,6 +51,7 @@ export const detectChartsInPage = async (base64Image: string): Promise<DetectedI
     2. A label (e.g., "Figure 1A").
     3. The type (r_stat, complex_table, standard_chart, infographic).
     4. The associated caption.
+    5. A reason (1 brief sentence explaining the classification, e.g. "Contains p-values and risk table").
   `;
 
   try {
@@ -83,9 +77,10 @@ export const detectChartsInPage = async (base64Image: string): Promise<DetectedI
               },
               label: { type: Type.STRING },
               type: { type: Type.STRING, enum: ["r_stat", "complex_table", "standard_chart", "infographic"] },
-              caption: { type: Type.STRING, description: "The caption text" }
+              caption: { type: Type.STRING, description: "The caption text" },
+              reason: { type: Type.STRING, description: "Rationale for the classification" }
             },
-            required: ["box_2d", "label", "type", "caption"]
+            required: ["box_2d", "label", "type", "caption", "reason"]
           }
         }
       }
@@ -121,7 +116,8 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
     1. Identify the 'chartType' from this list: 'survival', 'forest', 'waterfall', 'nomogram', 'group_comparison', 'roc', 'volcano', 'swimmer', 'sankey'.
     2. Extract the 'style_config' (Visual Design Tokens). Focus on:
        - journal_theme (NEJM/LANCET/NATURE style?)
-       - colors (palette)
+       - custom_palette: EXTRACT EXACT HEX CODES from the image for each series (e.g. ["#E69F00", "#56B4E9"]).
+       - aspect_ratio: Estimate the width/height ratio (e.g. 1.5 for landscape, 0.8 for portrait).
        - specific toggles (risk_table? p-values? confidence intervals?)
     3. Extract the 'data_payload' (The Data). 
        - Reconstruct the dataset needed to re-plot this. 
@@ -189,7 +185,10 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
        - Identify REFERENCE LINES (e.g., "Limit of Detection", "Baseline", dashed lines).
        - Identify ANNOTATIONS (e.g., "p < 0.05", "***", "Max Value", arrows pointing to specific areas).
        - Identify the exact visual style of lines (dashed vs solid).
-    3. **Axis Calibration**: Use the local context to determine the exact unit and scale (linear vs log).
+    3. **High-Fidelity Style**:
+       - Extract precise HEX COLORS for each series (e.g. ["#E69F00", "#56B4E9"]).
+       - Estimate the Aspect Ratio (Width / Height).
+    4. **Axis Calibration**: Use the local context to determine the exact unit and scale (linear vs log).
 
     Output the result in the specified JSON format.
   `;
@@ -214,6 +213,10 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
             chartType: { type: Type.STRING, enum: ["scatter", "line", "bar"] },
             xAxisLabel: { type: Type.STRING },
             yAxisLabel: { type: Type.STRING },
+            // Style Fields
+            colors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of hex codes" },
+            aspectRatio: { type: Type.NUMBER, description: "W/H ratio" },
+
             xAxisConfig: {
               type: Type.OBJECT,
               properties: {

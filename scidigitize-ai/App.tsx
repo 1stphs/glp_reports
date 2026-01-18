@@ -147,6 +147,7 @@ const App: React.FC = () => {
                   discoveredItems.push({
                     id: generateId(),
                     type: item.type,
+                    reason: item.reason, // Pass the rationale
                     file: croppedFile,
                     previewUrl: URL.createObjectURL(croppedFile),
                     context: richContext,

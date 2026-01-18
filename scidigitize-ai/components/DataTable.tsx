@@ -10,7 +10,7 @@ interface DataTableProps {
 const DataTable: React.FC<DataTableProps> = ({ data, xAxisLabel, yAxisLabel }) => {
   return (
     <div className="overflow-hidden border border-slate-200 rounded-lg">
-      <div className="overflow-y-auto max-h-[300px]">
+      <div className="overflow-y-auto max-h-[700px]">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0">
             <tr>

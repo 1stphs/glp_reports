@@ -55,6 +55,11 @@ export interface ExtractedChartData {
   dataPoints: DataPoint[];
   referenceLines?: ChartReferenceLine[];
   annotations?: ChartAnnotation[];
+
+  // High-Fidelity Style
+  colors?: string[]; // Extracted hex codes for series
+  aspectRatio?: number; // Width / Height ratio
+
   confidence: number;
   summary: string;
 }
@@ -86,11 +91,13 @@ export interface DetectedItem {
   label: string;
   type: DetectionType;
   caption: string;
+  reason: string; // Brief rationale for classification
 }
 
 export interface SubItem {
   id: string;
   type: DetectionType;
+  reason?: string; // Classification rationale
   file: File;
   previewUrl: string;
   context: string; // Combined specific caption + full page text
