@@ -2,11 +2,32 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# 🧬 SciDigitize AI
+> **Transforming Scientific Papers into Computable Data**
 
-This contains everything you need to run your app locally.
+SciDigitize AI is a specialized tool designed to assist researchers in extracting, digitizing, and analyzing visual data from scientific PDF documents. 
 
-View your app in AI Studio: https://ai.studio/apps/drive/1n1ShyocX7mb9B5_A9gmX2b1irRJQEpVa
+It solves the "Unstructured Data" problem in GLP/Clinical research by using Multimodal AI to unlock insights trapped in charts, tables, and diagrams.
+
+## 🚀 Core Functionality
+
+### 1. **Perception & Discovery**
+- **Full PDF Parsing**: Drag & drop any scientific PDF. The system automatically scans every page.
+- **Visual Object Detection**: Uses **Gemini 2.5 Flash** to identify and classify distinct visual elements:
+    - 📊 **Charts**: Scatter plots, bar graphs, line charts.
+    - 📅 **Tables**: Structured data grids.
+    - 🖼️ **Infographics**: Pathways, molecular structures, diagrams.
+- **Context Extraction**: Captures the "Global Context" (Title/Abstract) and "Local Context" (Figure Captions) to inform the analysis engine.
+
+### 2. **Intelligent Extraction (Digitization)**
+Once elements are detected, specialized AI Agents (powered by **Gemini 2.0 Pro**) digitize them:
+- **Chart-to-Data**: Reconstructs the underlying `(X, Y)` raw data points from static images, recognizes reference lines, and identifies statistical annotations (p-values).
+- **Table-to-JSON**: Transcribes complex biological tables into machine-readable JSON formats, handling merged headers and abbreviations intelligently.
+- **Diagram Interpretation**: Generates detailed textual descriptions and key takeaways for qualitative infographics.
+
+### 3. **Verification & Interactive Re-plotting**
+- **Side-by-Side Comparison**: Users can verify the extracted data against the original image.
+- **Interactive Visualization**: Automatically re-renders digitized data using **Recharts**, allowing users to inspect individual data points that were previously just pixels.
 
 ## Run Locally
 
@@ -18,3 +39,24 @@ View your app in AI Studio: https://ai.studio/apps/drive/1n1ShyocX7mb9B5_A9gmX2b
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## 🛠 Tech Stack
+
+- **Frontend Framework**: [React 19](https://react.dev/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **AI Model**: [Google Gemini Pro Vision](https://deepmind.google/technologies/gemini/) (via `@google/genai`)
+- **PDF Processing**: [PDF.js](https://mozilla.github.io/pdf.js/) (`pdfjs-dist`) - For rendering and text extraction
+- **Visualization**: [Recharts](https://recharts.org/) - For rendering digitized charts
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+## ✨ Key Features
+
+- **Smart PDF Scanning**: Automatically parses multi-page PDFs, extracts global text context (e.g., abstract/introduction), and renders pages for visual analysis.
+- **Visual Element Detection**: Auto-detects charts, tables, and infographics within documents using computer vision techniques.
+- **AI-Powered Digitization**: Leverages Gemini Multimodal API to:
+    -Convert static chart images into raw data (JSON) and re-plot them interactively using Recharts.
+    - Transcribe complex tables into structured formats.
+    - Summarize infographics with context awareness.
+- **Context-Aware Analysis**: Combines local (page-level) and global (document-level) text context to improve AI analysis accuracy.
