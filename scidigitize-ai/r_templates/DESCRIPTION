@@ -1,0 +1,30 @@
+Package: scidigitizeR
+Type: Package
+Title: Standardized Medical Chart Reconstruction Engine
+Version: 0.1.0
+Author: SciDigitize AI Team
+Maintainer: SciDigitize AI <support@scidigitize.ai>
+Description: A configuration-driven plotting engine for reconstructing medical and 
+    biostatistical charts with 1:1 fidelity. Supports Survival curves, Forest plots, 
+    Waterfall plots, and Nomograms using standardized JSON inputs.
+License: Proprietary
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    ggplot2 (>= 3.4.0),
+    survminer (>= 0.4.9),
+    survival (>= 3.5-0),
+    jsonlite (>= 1.8.0),
+    forestploter (>= 1.1.0),
+    rms (>= 6.7-0),
+    pROC (>= 1.18.0),
+    ggpubr (>= 0.6.0),
+    patchwork (>= 1.1.0)
+Suggests: 
+    testthat (>= 3.0.0),
+    vdiffr (>= 1.0.0),
+    maftools,
+    EnhancedVolcano,
+    swimplot,
+    ggalluvial
+RoxygenNote: 7.2.3

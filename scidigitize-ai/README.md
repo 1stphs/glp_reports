@@ -13,10 +13,11 @@ It solves the "Unstructured Data" problem in GLP/Clinical research by using Mult
 
 ### 1. **Perception & Discovery**
 - **Full PDF Parsing**: Drag & drop any scientific PDF. The system automatically scans every page.
-- **Visual Object Detection**: Uses **Gemini 2.5 Flash** to identify and classify distinct visual elements:
-    - 📊 **Charts**: Scatter plots, bar graphs, line charts.
-    - 📅 **Tables**: Structured data grids.
-    - 🖼️ **Infographics**: Pathways, molecular structures, diagrams.
+- **Visual Object Detection**: Uses **Gemini 2.5 Flash** to identify and classify visual elements into three distinct tiers to avoid misclassification:
+    - 🔴 **R-Grade Medical Stats**: Charts that require **1:1 Reconstruction** (e.g., Survival Curves, Forest Plots, Waterfall Plots). *Action: Flag for R Code Generation.*
+    - � **Complex Tables**: Nested headers, Baseline Characteristics, AE Summary tables. *Action: Structure Preservation & JSON Extraction.*
+    - �🟡 **Standard Data Viz**: Simple quantitative plots (Bar, Line, Scatter). *Action: Standard Digitization via Recharts.*
+    - 🟢 **Infographics**: Diagrams, molecular pathways, or photos. *Action: Context Extraction Only (No Reconstruction).*
 - **Context Extraction**: Captures the "Global Context" (Title/Abstract) and "Local Context" (Figure Captions) to inform the analysis engine.
 
 ### 2. **Intelligent Extraction (Digitization)**
@@ -28,6 +29,17 @@ Once elements are detected, specialized AI Agents (powered by **Gemini 2.0 Pro**
 ### 3. **Verification & Interactive Re-plotting**
 - **Side-by-Side Comparison**: Users can verify the extracted data against the original image.
 - **Interactive Visualization**: Automatically re-renders digitized data using **Recharts**, allowing users to inspect individual data points that were previously just pixels.
+
+## 🔮 Future Roadmap: The R Ecosystem Standard
+
+We are expanding our vision to achieve **1:1 pixel-perfect reconstruction** of complex medical statistics charts. By leveraging the **R Ecosystem** (the "Gold Standard" in medical stats), we aim to support:
+
+*   **Survival Analysis**: Kaplan-Meier (`survminer`)
+*   **Forest Plots**: Meta-analysis (`forestplot`)
+*   **Waterfall Plots**: Oncology (`maftools`)
+*   **Nomograms**: Clinical Prediction (`rms`)
+
+👉 **[Read the Full Vision for Medical Chart Reconstruction](docs/vision_r_reconstruction.md)**
 
 ## Run Locally
 
