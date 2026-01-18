@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData } from "../types";
+import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData, ExtractedRStatData, DetectionType } from "../types";
 
 // Helper to convert file to base64
 export const fileToGenerativePart = async (file: File): Promise<string> => {
@@ -16,34 +16,53 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
 };
 
 interface DetectedItem {
-  box_2d: [number, number, number, number]; 
+  box_2d: [number, number, number, number];
   label: string;
-  type: 'chart' | 'table' | 'infographic';
+  type: DetectionType;
   caption: string;
 }
 
-// 1. Discovery Phase
+// 1. Discovery Phase (Updated for 4-Tier)
 export const detectChartsInPage = async (base64Image: string): Promise<DetectedItem[]> => {
   if (!process.env.API_KEY) throw new Error("API Key missing");
-  
+
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+
   const prompt = `
-    Analyze this scientific document page. Detect and classify distinct visual elements into three categories:
-    1. 'chart': Quantitative plots (scatter, bar, line, box plots).
-    2. 'table': Structured data grids with rows/columns.
-    3. 'infographic': Qualitative diagrams, flowcharts, molecular structures, pathways, schematics, or photos.
+    Analyze this scientific document page. Detect and classify distinct visual elements into these 4 STRICT categories.
+    
+    CRITICAL RULE: If a chart contains Statistical Annotations (P-values, HR, Confidence Intervals) or Medical specific contexts (Bio-analysis, Clinical Trials), it MUST be classified as 'r_stat'. Do NOT classify these as 'standard_chart'.
+
+    1. 'r_stat' (Red Tier): High-value medical/statistical charts requiring 1:1 reconstruction.
+       - INCLUDES: 
+          * Survival Curves (Kaplan-Meier): Look for step-like lines, "No. at risk" tables below X-axis, "+" marks for censoring.
+          * Forest Plots: Look for vertical reference lines, odds ratios/hazard ratios text columns.
+          * Waterfall Plots: Ordered bar charts (mutation/response).
+          * Nomograms: Complex scales and points axes.
+          * Volcano/Swimmer/Sankey/ROC.
+       - KEYWORDS: "HR", "P<", "CI", "Months", "Survival", "Response".
+    
+    2. 'complex_table' (Blue Tier): Dense clinical tables.
+       - INCLUDES: Baseline Characteristics (Table 1), AE Summaries, PK Parameter tables.
+       - LOOK FOR: Nested headers, indentation, extensive abbreviations, "n (%)".
+       
+    3. 'standard_chart' (Yellow Tier): Basic quantitative plots WITHOUT medical stats.
+       - INCLUDES: Simple Bar charts, Line charts, Scatter plots showing basic raw data trends (e.g. "Body Weight over time" without complex stats).
+       - Exclude if it has a Risk Table or P-value -> Move to r_stat.
+       
+    4. 'infographic' (Green Tier): Qualitative diagrams.
+       - INCLUDES: Pathways, Molecular structures, Flowcharts, Photos, Schematics.
     
     For each item, return:
-    1. The bounding box (ymin, xmin, ymax, xmax) on a 0-1000 scale.
-    2. A label (e.g., "Figure 1").
-    3. The type.
-    4. The associated caption text located near the image.
+    1. The bounding box [ymin, xmin, ymax, xmax] (0-1000 scale).
+    2. A label (e.g., "Figure 1A").
+    3. The type (r_stat, complex_table, standard_chart, infographic).
+    4. The associated caption.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+      model: "gemini-2.5-flash",
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: base64Image } },
@@ -57,14 +76,14 @@ export const detectChartsInPage = async (base64Image: string): Promise<DetectedI
           items: {
             type: Type.OBJECT,
             properties: {
-              box_2d: { 
-                type: Type.ARRAY, 
+              box_2d: {
+                type: Type.ARRAY,
                 items: { type: Type.INTEGER },
                 description: "Bounding box [ymin, xmin, ymax, xmax] on 0-1000 scale"
               },
               label: { type: Type.STRING },
-              type: { type: Type.STRING, enum: ["chart", "table", "infographic"] },
-              caption: { type: Type.STRING, description: "The caption text found in the image" }
+              type: { type: Type.STRING, enum: ["r_stat", "complex_table", "standard_chart", "infographic"] },
+              caption: { type: Type.STRING, description: "The caption text" }
             },
             required: ["box_2d", "label", "type", "caption"]
           }
@@ -82,7 +101,73 @@ export const detectChartsInPage = async (base64Image: string): Promise<DetectedI
   }
 };
 
-// 2a. Extraction: Charts
+// 2a. Extraction: R-Grade Statistics (Configuration over Code)
+export const analyzeRStatImage = async (file: File, contextText?: string, globalContext?: string): Promise<ExtractedRStatData> => {
+  if (!process.env.API_KEY) throw new Error("API Key missing");
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const base64Data = await fileToGenerativePart(file);
+
+  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT: "${globalContext}"` : "";
+  const localCtx = contextText ? `\nLOCAL CAPTION: "${contextText}"` : "";
+
+  const prompt = `
+    You are a Senior Bio-Statistician. Your goal is to digitize this medical chart into a Configuration Object for an R Template Engine.
+    
+    CONTEXT:
+    ${globalCtx}
+    ${localCtx}
+    
+    TASK:
+    1. Identify the 'chartType' from this list: 'survival', 'forest', 'waterfall', 'nomogram', 'group_comparison', 'roc', 'volcano', 'swimmer', 'sankey'.
+    2. Extract the 'style_config' (Visual Design Tokens). Focus on:
+       - journal_theme (NEJM/LANCET/NATURE style?)
+       - colors (palette)
+       - specific toggles (risk_table? p-values? confidence intervals?)
+    3. Extract the 'data_payload' (The Data). 
+       - Reconstruct the dataset needed to re-plot this. 
+       - For Survival: time, status, strata.
+       - For Forest: variable, estimate, low, high, p_val.
+       - For Volcano: log2FC, p_value, gene_symbol.
+       
+    OUTPUT JSON conforming to the schema.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-pro-exp-02-05",
+      contents: {
+        parts: [
+          { inlineData: { mimeType: file.type, data: base64Data } },
+          { text: prompt }
+        ]
+      },
+      config: {
+        thinkingConfig: { thinkingBudget: 4096 },
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            dataType: { type: Type.STRING, enum: ["r_stat"] },
+            chartType: { type: Type.STRING, enum: ["survival", "forest", "waterfall", "nomogram", "group_comparison", "roc", "volcano", "swimmer", "sankey"] },
+            style_config: { type: Type.OBJECT, description: "Style configuration matching RPlotStyleConfig" },
+            data_payload: { type: Type.OBJECT, description: "Raw data array or object" },
+            confidence: { type: Type.NUMBER },
+            summary: { type: Type.STRING }
+          },
+          required: ["dataType", "chartType", "style_config", "data_payload", "confidence"]
+        }
+      }
+    });
+
+    if (!response.text) throw new Error("No response");
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error("Gemini R-Stat Error:", error);
+    throw error;
+  }
+};
+
+// 2b. Extraction: Standard Charts (Legacy)
 export const analyzeChartImage = async (file: File, contextText?: string, globalContext?: string): Promise<ExtractedChartData> => {
   if (!process.env.API_KEY) throw new Error("API Key missing");
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -111,7 +196,7 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview", 
+      model: "gemini-3-pro-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -180,8 +265,8 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  x: { type: Type.STRING }, 
-                  y: { type: Type.NUMBER }, 
+                  x: { type: Type.STRING },
+                  y: { type: Type.NUMBER },
                   series: { type: Type.STRING, nullable: true },
                   label: { type: Type.STRING, nullable: true, description: "Specific label for this point if text is near it" }
                 }, required: ["x", "y"]
@@ -202,7 +287,7 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
 
     // Post-process annotations to match X type if needed (currently schema enforces number for simplicity, 
     // but in a full app we'd handle categorical X for annotations too. For now assume chart coords).
-    
+
     return { ...result, dataType: 'chart', dataPoints: processedPoints };
   } catch (error) {
     console.error("Gemini Chart Error:", error);
@@ -236,7 +321,7 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview", 
+      model: "gemini-3-pro-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -298,7 +383,7 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview", 
+      model: "gemini-3-pro-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },

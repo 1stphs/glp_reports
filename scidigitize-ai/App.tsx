@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import MainView from './components/MainView';
 import { FileItem, SubItem } from './types';
-import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage } from './services/geminiService';
+import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage, analyzeRStatImage } from './services/geminiService';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Define worker globally
@@ -18,7 +18,7 @@ const App: React.FC = () => {
 
   const handleUpload = async (fileList: FileList) => {
     const uploadedFiles = Array.from(fileList);
-    
+
     // Separate PDFs and Images
     const pdfFiles = uploadedFiles.filter(f => f.type === 'application/pdf');
     const imageFiles = uploadedFiles.filter(f => f.type.startsWith('image/'));
@@ -55,7 +55,7 @@ const App: React.FC = () => {
 
   const processPdf = async (file: File) => {
     const pdfId = generateId();
-    
+
     // Create placeholder for PDF
     const newPdfItem: FileItem = {
       id: pdfId,
@@ -66,13 +66,13 @@ const App: React.FC = () => {
       timestamp: Date.now(),
       subItems: []
     };
-    
+
     setFiles(prev => [...prev, newPdfItem]);
     setSelectedFileId(pdfId); // Focus on the new PDF
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    
+
     // IMPORTANT: Extract global context (First page usually contains Title + Abstract)
     let globalContext = "";
     try {
@@ -87,19 +87,19 @@ const App: React.FC = () => {
 
     // Scan all pages (or limit to a reasonable number if performance is a concern, but user requested full scan)
     // Let's loop through all pages but process sequentially to not crash browser
-    const maxPages = pdf.numPages; 
+    const maxPages = pdf.numPages;
     const discoveredItems: SubItem[] = [];
-    
+
     for (let i = 1; i <= maxPages; i++) {
       try {
         const page = await pdf.getPage(i);
-        
+
         // 1. Extract Text for this specific page (Local Context)
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map((item: any) => item.str).join(' ');
 
         // 2. Render Page to Image for Vision AI
-        const viewport = page.getViewport({ scale: 2.0 }); 
+        const viewport = page.getViewport({ scale: 2.0 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         if (!context) continue;
@@ -109,14 +109,14 @@ const App: React.FC = () => {
 
         await page.render({ canvasContext: context, viewport: viewport } as any).promise;
         const pageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-        
+
         // 3. Detect Items
         const detectedResults = await detectChartsInPage(pageBase64.split(',')[1]);
 
         for (const item of detectedResults) {
           // Crop logic
           const [ymin, xmin, ymax, xmax] = item.box_2d;
-          
+
           const pX = (xmin / 1000) * canvas.width;
           const pY = (ymin / 1000) * canvas.height;
           const pW = ((xmax - xmin) / 1000) * canvas.width;
@@ -132,21 +132,21 @@ const App: React.FC = () => {
           cropCanvas.width = cropW;
           cropCanvas.height = cropH;
           const cropCtx = cropCanvas.getContext('2d');
-          
+
           if (cropCtx) {
             cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-            
+
             await new Promise<void>(resolve => {
               cropCanvas.toBlob((blob) => {
                 if (blob) {
                   const croppedFile = new File([blob], `${file.name}_pg${i}_${item.label}.jpg`, { type: 'image/jpeg' });
-                  
+
                   // Combine detected caption with full page text for rich local context
                   const richContext = `[CAPTION]: ${item.caption}\n\n[FULL PAGE TEXT]: ${pageText}`;
 
                   discoveredItems.push({
                     id: generateId(),
-                    type: item.type as 'chart' | 'table' | 'infographic', 
+                    type: item.type,
                     file: croppedFile,
                     previewUrl: URL.createObjectURL(croppedFile),
                     context: richContext,
@@ -192,7 +192,7 @@ const App: React.FC = () => {
   const processQueue = useCallback(async () => {
     setIsProcessing(true);
     const queue = files.filter(f => f.type === 'image' && (f.status === 'idle' || f.status === 'queued'));
-    
+
     for (const item of queue) {
       setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'processing' } : f));
       setSelectedFileId(item.id);
@@ -210,7 +210,7 @@ const App: React.FC = () => {
 
   // Process selected items within a PDF
   const processPdfSubItems = useCallback(async (fileId: string, subItemIds: string[]) => {
-    
+
     setFiles(prev => prev.map(f => {
       if (f.id === fileId && f.subItems) {
         return {
@@ -230,17 +230,38 @@ const App: React.FC = () => {
     const itemsToProcess = parentFile.subItems.filter(sub => subItemIds.includes(sub.id));
 
     for (const item of itemsToProcess) {
-       try {
+      try {
         let result;
         // Pass both local item.context (rich page text) and globalContext
-        if (item.type === 'table') {
-          result = await analyzeTableImage(item.file, item.context, globalContext);
-        } else if (item.type === 'infographic') {
-          result = await analyzeInfographicImage(item.file, item.context, globalContext);
-        } else {
-          result = await analyzeChartImage(item.file, item.context, globalContext);
+
+        switch (item.type) {
+          case 'r_stat':
+            // R-Grade Statistics
+            result = await analyzeRStatImage(item.file, item.context, globalContext);
+            break;
+
+          case 'standard_chart':
+            // Standard Quantitative Charts
+            result = await analyzeChartImage(item.file, item.context, globalContext);
+            break;
+
+          case 'table': // Legacy Fallback
+          case 'complex_table':
+            // Complex Tables
+            result = await analyzeTableImage(item.file, item.context, globalContext);
+            break;
+
+          case 'infographic':
+            // Infographics
+            result = await analyzeInfographicImage(item.file, item.context, globalContext);
+            break;
+
+          default:
+            // Default to standard chart if unknown
+            result = await analyzeChartImage(item.file, item.context, globalContext);
+            break;
         }
-        
+
         setFiles(prev => prev.map(f => {
           if (f.id === fileId && f.subItems) {
             return {
@@ -252,7 +273,7 @@ const App: React.FC = () => {
         }));
 
       } catch (error) {
-         setFiles(prev => prev.map(f => {
+        setFiles(prev => prev.map(f => {
           if (f.id === fileId && f.subItems) {
             return {
               ...f,
@@ -270,8 +291,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-slate-100 font-sans text-slate-900">
-      <Sidebar 
-        files={files} 
+      <Sidebar
+        files={files}
         selectedFileId={selectedFileId}
         onSelectFile={setSelectedFileId}
         onUpload={handleUpload}
@@ -280,11 +301,11 @@ const App: React.FC = () => {
         isProcessing={isProcessing}
         isScanning={isScanning}
       />
-      <MainView 
+      <MainView
         selectedFile={selectedFile}
         onStartDigitization={() => {
-           const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-           if(fileInput) fileInput.click();
+          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+          if (fileInput) fileInput.click();
         }}
         onProcessPdfItems={processPdfSubItems}
       />

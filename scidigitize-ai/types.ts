@@ -1,3 +1,7 @@
+import { RPlotStyleConfig } from './src/schemas/r_plot_schemas';
+
+export type DetectionType = 'r_stat' | 'complex_table' | 'standard_chart' | 'infographic';
+
 export type ProcessingStatus = 'idle' | 'queued' | 'processing' | 'completed' | 'error';
 
 export interface DataPoint {
@@ -29,8 +33,19 @@ export interface ChartAnnotation {
   type: 'label' | 'significance' | 'arrow'; // significance for things like *** or p<0.05
 }
 
+// --- 1. R-Grade Stats Data ---
+export interface ExtractedRStatData {
+  dataType: 'r_stat';
+  chartType: 'survival' | 'forest' | 'waterfall' | 'nomogram' | 'group_comparison' | 'roc' | 'volcano' | 'swimmer' | 'sankey';
+  style_config: RPlotStyleConfig;
+  data_payload: any; // Flexible payload depending on chart type (e.g., array of objects)
+  confidence: number;
+  summary: string;
+}
+
+// --- 2. Standard Chart Data ---
 export interface ExtractedChartData {
-  dataType: 'chart';
+  dataType: 'chart'; // Legacy name 'chart' maps to 'standard_chart' detection
   title: string;
   chartType: 'scatter' | 'line' | 'bar';
   xAxisLabel: string;
@@ -38,12 +53,13 @@ export interface ExtractedChartData {
   xAxisConfig?: AxisConfig;
   yAxisConfig?: AxisConfig;
   dataPoints: DataPoint[];
-  referenceLines?: ChartReferenceLine[]; // New: Horizontal/Vertical lines
-  annotations?: ChartAnnotation[]; // New: Text floating on the chart
+  referenceLines?: ChartReferenceLine[];
+  annotations?: ChartAnnotation[];
   confidence: number;
   summary: string;
 }
 
+// --- 3. Table Data ---
 export interface ExtractedTableData {
   dataType: 'table';
   title: string;
@@ -53,6 +69,7 @@ export interface ExtractedTableData {
   summary: string;
 }
 
+// --- 4. Infographic Data ---
 export interface ExtractedInfographicData {
   dataType: 'infographic';
   title: string;
@@ -62,11 +79,18 @@ export interface ExtractedInfographicData {
   confidence: number;
 }
 
-export type ExtractedData = ExtractedChartData | ExtractedTableData | ExtractedInfographicData;
+export type ExtractedData = ExtractedRStatData | ExtractedChartData | ExtractedTableData | ExtractedInfographicData;
+
+export interface DetectedItem {
+  box_2d: [number, number, number, number];
+  label: string;
+  type: DetectionType;
+  caption: string;
+}
 
 export interface SubItem {
   id: string;
-  type: 'chart' | 'table' | 'infographic'; // Detected type
+  type: DetectionType;
   file: File;
   previewUrl: string;
   context: string; // Combined specific caption + full page text
@@ -80,14 +104,15 @@ export interface FileItem {
   id: string;
   type: 'image' | 'pdf';
   file: File;
-  previewUrl: string; 
-  status: ProcessingStatus | 'scanning'; 
-  result?: ExtractedData; 
+  previewUrl: string;
+  status: ProcessingStatus | 'scanning';
+  result?: ExtractedData;
   errorMessage?: string;
   timestamp: number;
-  context?: string; 
-  
+  context?: string;
+
   // PDF Specific
   globalContext?: string; // Title, Abstract, or first page text
-  subItems?: SubItem[]; 
+  subItems?: SubItem[];
 }
+
