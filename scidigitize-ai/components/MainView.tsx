@@ -214,7 +214,7 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
             </div>
 
             {/* Right Col: Extracted Data */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-auto">
               <div className="flex border-b border-slate-200 bg-slate-50">
                 {dataType === 'chart' || dataType === 'r_stat' ? (
                   <>
@@ -248,7 +248,7 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
                 )}
               </div>
 
-              <div className="flex-1 p-6 min-h-[400px]">
+              <div className="flex-1 p-6 min-h-[400px] flex flex-col justify-center">
                 {renderContent()}
               </div>
             </div>

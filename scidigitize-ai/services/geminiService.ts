@@ -145,12 +145,66 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
           properties: {
             dataType: { type: Type.STRING, enum: ["r_stat"] },
             chartType: { type: Type.STRING, enum: ["survival", "forest", "waterfall", "nomogram", "group_comparison", "roc", "volcano", "swimmer", "sankey"] },
-            style_config: { type: Type.OBJECT, description: "Style configuration matching RPlotStyleConfig" },
-            data_payload: { type: Type.OBJECT, description: "Raw data array or object" },
+            style_config: {
+              type: Type.OBJECT,
+              description: "Style configuration matching RPlotStyleConfig",
+              properties: {
+                journal_theme: { type: Type.STRING, enum: ["NEJM", "LANCET", "NATURE", "JCO", "Simple"] },
+                custom_palette: { type: Type.ARRAY, items: { type: Type.STRING } },
+                aspect_ratio: { type: Type.NUMBER },
+                legend_position: { type: Type.STRING },
+                // Union fields
+                risk_table: {
+                  type: Type.OBJECT,
+                  properties: {
+                    show: { type: Type.BOOLEAN },
+                    height: { type: Type.NUMBER },
+                    y_text: { type: Type.BOOLEAN }
+                  },
+                  nullable: true
+                },
+                p_value_annotation: {
+                  type: Type.OBJECT,
+                  properties: {
+                    show: { type: Type.BOOLEAN },
+                    coord: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                  },
+                  nullable: true
+                },
+                censoring_mark: { type: Type.STRING },
+                sort_direction: { type: Type.STRING },
+                ref_line: { type: Type.NUMBER },
+                ci_style: { type: Type.STRING },
+                flow_type: { type: Type.STRING }
+              },
+              nullable: true
+            },
+            data_payload: {
+              type: Type.ARRAY,
+              description: "Raw data array",
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  x: { type: Type.NUMBER, nullable: true },
+                  y: { type: Type.NUMBER, nullable: true },
+                  group: { type: Type.STRING, nullable: true },
+                  series: { type: Type.STRING, nullable: true },
+                  time: { type: Type.NUMBER, nullable: true },
+                  status: { type: Type.NUMBER, nullable: true }, // Survival
+                  estimate: { type: Type.NUMBER, nullable: true }, // Forest
+                  low: { type: Type.NUMBER, nullable: true },
+                  high: { type: Type.NUMBER, nullable: true },
+                  p_val: { type: Type.NUMBER, nullable: true },
+                  gene_symbol: { type: Type.STRING, nullable: true }, // Volcano
+                  log2FC: { type: Type.NUMBER, nullable: true },
+                  label: { type: Type.STRING, nullable: true }
+                }
+              }
+            },
             confidence: { type: Type.NUMBER },
             summary: { type: Type.STRING }
           },
-          required: ["dataType", "chartType", "style_config", "data_payload", "confidence"]
+          required: ["dataType", "chartType", "confidence"]
         }
       }
     });
