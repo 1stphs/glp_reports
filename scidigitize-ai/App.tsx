@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar';
 import MainView from './components/MainView';
 import { FileItem, SubItem } from './types';
 import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage, analyzeRStatImage } from './services/geminiService';
+import { initiateBatchUpload, uploadFileToUrl, pollBatchResult } from './services/mineruService';
+import { processMineruZip } from './services/mineruResultHandler';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Define worker globally
@@ -13,6 +15,83 @@ const App: React.FC = () => {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+
+
+
+  // Mineru Logic
+  const handleStartMineruParse = async (fileId: string) => {
+    const fileItem = files.find(f => f.id === fileId);
+    if (!fileItem || !fileItem.file) return;
+
+    // 1. Update State: Uploading
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, mineruStatus: 'uploading' } : f));
+
+    try {
+      // 2. Initiate Batch
+      const batchInit = await initiateBatchUpload([fileItem.file]);
+      if (batchInit.code !== 0) throw new Error(batchInit.msg);
+
+      const batchId = batchInit.data.batch_id;
+      const uploadUrl = batchInit.data.file_urls[0];
+
+      // 3. Upload File
+      await uploadFileToUrl(uploadUrl, fileItem.file);
+
+      // 4. Update State: Processing
+      setFiles(prev => prev.map(f => f.id === fileId ? {
+        ...f,
+        mineruStatus: 'processing',
+        mineruBatchId: batchId
+      } : f));
+
+      // 5. Start Polling
+      const pollInterval = setInterval(async () => {
+        try {
+          const resultRes = await pollBatchResult(batchId);
+          if (resultRes.code !== 0) return; // Wait for next poll or handle error
+
+          // Mineru returns a list of results for the batch
+          // Since we uploaded 1 file, we look at extract_result[0]
+          // But API result structure might vary slightly, let's be robust
+          const result = resultRes.data.extract_result.find(r => r.file_name === fileItem.file.name);
+
+          if (!result) return;
+
+          if (result.state === 'done') {
+            clearInterval(pollInterval);
+            setFiles(prev => prev.map(f => f.id === fileId ? {
+              ...f,
+              mineruStatus: 'done',
+              mineruResultUrl: result.full_zip_url
+            } : f));
+          } else if (result.state === 'failed') {
+            clearInterval(pollInterval);
+            setFiles(prev => prev.map(f => f.id === fileId ? { ...f, mineruStatus: 'error' } : f));
+            alert(`Mineru Parsing Failed: ${result.err_msg}`);
+          } else if (result.state === 'running') {
+            // Update progress if available
+            if (result.extract_progress) {
+              setFiles(prev => prev.map(f => f.id === fileId ? {
+                ...f,
+                mineruProgress: {
+                  current: result.extract_progress!.extracted_pages,
+                  total: result.extract_progress!.total_pages
+                }
+              } : f));
+            }
+          }
+        } catch (err) {
+          console.error("Polling Error", err);
+          // Optionally clear interval on hard network error
+        }
+      }, 3000); // Poll every 3 seconds
+
+    } catch (err: any) {
+      console.error("Mineru Start Error", err);
+      setFiles(prev => prev.map(f => f.id === fileId ? { ...f, mineruStatus: 'error' } : f));
+      alert(`Failed to start Mineru parsing: ${err.message}`);
+    }
+  };
 
   const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
 
@@ -37,12 +116,12 @@ const App: React.FC = () => {
       if (!selectedFileId && newImageFiles.length > 0) setSelectedFileId(newImageFiles[0].id);
     }
 
-    // Handle PDFs
+    // Handle PDFs via Mineru
     if (pdfFiles.length > 0) {
       setIsScanning(true);
       try {
         for (const pdfFile of pdfFiles) {
-          await processPdf(pdfFile);
+          await processPdfViaMineru(pdfFile);
         }
       } catch (err) {
         console.error("PDF Processing Error", err);
@@ -53,130 +132,90 @@ const App: React.FC = () => {
     }
   };
 
-  const processPdf = async (file: File) => {
+  const processPdfViaMineru = async (file: File) => {
     const pdfId = generateId();
 
-    // Create placeholder for PDF
+    // Initial State: Scanning (which covers Uploading/Processing in UI)
     const newPdfItem: FileItem = {
       id: pdfId,
       type: 'pdf',
       file: file,
-      previewUrl: '', // Will update later? Or generic icon.
-      status: 'scanning',
+      previewUrl: '',
+      status: 'scanning', // Block UI with scanning state
+      mineruStatus: 'uploading',
       timestamp: Date.now(),
       subItems: []
     };
 
     setFiles(prev => [...prev, newPdfItem]);
-    setSelectedFileId(pdfId); // Focus on the new PDF
+    setSelectedFileId(pdfId);
 
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-    // IMPORTANT: Extract global context (First page usually contains Title + Abstract)
-    let globalContext = "";
     try {
-      const firstPage = await pdf.getPage(1);
-      const textContent = await firstPage.getTextContent();
-      globalContext = textContent.items.map((item: any) => item.str).join(' ');
-      // Update the file item with this context immediately
-      setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, globalContext } : f));
-    } catch (e) {
-      console.warn("Failed to extract global text context", e);
-    }
+      // 1. Upload
+      const batchInit = await initiateBatchUpload([file]);
+      if (batchInit.code !== 0) throw new Error(batchInit.msg);
 
-    // Scan all pages (or limit to a reasonable number if performance is a concern, but user requested full scan)
-    // Let's loop through all pages but process sequentially to not crash browser
-    const maxPages = pdf.numPages;
-    const discoveredItems: SubItem[] = [];
+      const batchId = batchInit.data.batch_id;
+      const uploadUrl = batchInit.data.file_urls[0];
 
-    for (let i = 1; i <= maxPages; i++) {
-      try {
-        const page = await pdf.getPage(i);
+      await uploadFileToUrl(uploadUrl, file);
 
-        // 1. Extract Text for this specific page (Local Context)
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      // Update to Processing
+      setFiles(prev => prev.map(f => f.id === pdfId ? {
+        ...f,
+        mineruStatus: 'processing',
+        mineruBatchId: batchId
+      } : f));
 
-        // 2. Render Page to Image for Vision AI
-        const viewport = page.getViewport({ scale: 2.0 });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context) continue;
+      // 2. Poll
+      const pollInterval = setInterval(async () => {
+        try {
+          const resultRes = await pollBatchResult(batchId);
+          if (resultRes.code !== 0) return;
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+          const result = resultRes.data.extract_result.find(r => r.file_name === file.name);
+          if (!result) return;
 
-        await page.render({ canvasContext: context, viewport: viewport } as any).promise;
-        const pageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          if (result.state === 'done') {
+            clearInterval(pollInterval);
 
-        // 3. Detect Items
-        const detectedResults = await detectChartsInPage(pageBase64.split(',')[1]);
+            // 3. Download and Parse Zip
+            if (result.full_zip_url) {
+              const zipRes = await fetch(result.full_zip_url);
+              const zipBlob = await zipRes.blob();
+              const subItems = await processMineruZip(zipBlob, file.name);
 
-        for (const item of detectedResults) {
-          // Crop logic
-          const [ymin, xmin, ymax, xmax] = item.box_2d;
-
-          const pX = (xmin / 1000) * canvas.width;
-          const pY = (ymin / 1000) * canvas.height;
-          const pW = ((xmax - xmin) / 1000) * canvas.width;
-          const pH = ((ymax - ymin) / 1000) * canvas.height;
-
-          const padding = 20;
-          const cropX = Math.max(0, pX - padding);
-          const cropY = Math.max(0, pY - padding);
-          const cropW = Math.min(canvas.width - cropX, pW + padding * 2);
-          const cropH = Math.min(canvas.height - cropY, pH + padding * 2);
-
-          const cropCanvas = document.createElement('canvas');
-          cropCanvas.width = cropW;
-          cropCanvas.height = cropH;
-          const cropCtx = cropCanvas.getContext('2d');
-
-          if (cropCtx) {
-            cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-            await new Promise<void>(resolve => {
-              cropCanvas.toBlob((blob) => {
-                if (blob) {
-                  const croppedFile = new File([blob], `${file.name}_pg${i}_${item.label}.jpg`, { type: 'image/jpeg' });
-
-                  // Combine detected caption with full page text for rich local context
-                  const richContext = `[CAPTION]: ${item.caption}\n\n[FULL PAGE TEXT]: ${pageText}`;
-
-                  discoveredItems.push({
-                    id: generateId(),
-                    type: item.type,
-                    reason: item.reason, // Pass the rationale
-                    file: croppedFile,
-                    previewUrl: URL.createObjectURL(croppedFile),
-                    context: richContext,
-                    pageNumber: i,
-                    status: 'idle'
-                  });
-                }
-                resolve();
-              }, 'image/jpeg', 0.95);
-            });
+              setFiles(prev => prev.map(f => f.id === pdfId ? {
+                ...f,
+                status: 'idle', // Ready
+                mineruStatus: 'done',
+                mineruResultUrl: result.full_zip_url,
+                subItems: subItems
+              } : f));
+            }
+          } else if (result.state === 'failed') {
+            clearInterval(pollInterval);
+            setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, status: 'error', mineruStatus: 'error' } : f));
+          } else if (result.state === 'running' && result.extract_progress) {
+            setFiles(prev => prev.map(f => f.id === pdfId ? {
+              ...f,
+              mineruProgress: {
+                current: result.extract_progress!.extracted_pages,
+                total: result.extract_progress!.total_pages
+              }
+            } : f));
           }
+        } catch (e) {
+          console.error("Polling error", e);
         }
-      } catch (err) {
-        console.warn(`Error scanning page ${i}`, err);
-      }
-    }
+      }, 3000);
 
-    // Update PDF Item with discovered items
-    setFiles(prev => prev.map(f => {
-      if (f.id === pdfId) {
-        return {
-          ...f,
-          status: 'idle', // Ready for user to select
-          subItems: discoveredItems
-        };
-      }
-      return f;
-    }));
+    } catch (e) {
+      console.error("Mineru Flow Error", e);
+      setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, status: 'error' } : f));
+    }
   };
+
 
   const handleDeleteFile = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -309,6 +348,7 @@ const App: React.FC = () => {
           if (fileInput) fileInput.click();
         }}
         onProcessPdfItems={processPdfSubItems}
+        onStartMineruParse={handleStartMineruParse}
       />
     </div>
   );

@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { FileItem, SubItem } from '../types';
-import { CheckCircle2, Loader2, Play, AlertCircle, Eye, FileText, CheckSquare, Square, Table, BarChart3, Network, Image as ImageIcon } from 'lucide-react';
+import { File as FileIcon, Download, ExternalLink, RefreshCw, CheckCircle2, Loader2, Play, AlertCircle, Eye, FileText, CheckSquare, Square, Table, BarChart3, Network, Image as ImageIcon, CloudUpload } from 'lucide-react';
 
 interface PdfDashboardProps {
   fileItem: FileItem;
   onProcessSelected: (subItemIds: string[]) => void;
   onViewResult: (subItem: SubItem) => void;
+  // Mineru Props
+  onStartMineruParse: (fileId: string) => void;
 }
 
-const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected, onViewResult }) => {
+const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected, onViewResult, onStartMineruParse }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const subItems = fileItem.subItems || [];
@@ -55,20 +57,49 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
     }
   };
 
+  if (fileItem.status === 'error') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-slate-500">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+        </div>
+        <h3 className="text-lg font-medium text-slate-800">Processing Failed</h3>
+        <p className="max-w-md text-center mt-2 text-slate-500">
+          {fileItem.errorMessage || "Something went wrong during the analysis."}
+        </p>
+        <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded text-xs text-red-600 font-mono">
+          Check your API credentials and internet connection.
+        </div>
+      </div>
+    );
+  }
+
   if (fileItem.status === 'scanning') {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-500">
-        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <h3 className="text-lg font-medium text-slate-800">Scanning PDF Document...</h3>
+        <div className="relative mb-4">
+          {fileItem.mineruStatus === 'uploading' ? (
+            <CloudUpload className="w-12 h-12 text-blue-500 animate-bounce" />
+          ) : (
+            <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+          )}
+        </div>
+        <h3 className="text-lg font-medium text-slate-800">
+          {fileItem.mineruStatus === 'uploading' ? 'Uploading to Mineru AI...' : 'Mineru Intelligent Layout Analysis...'}
+        </h3>
         <p className="max-w-md text-center mt-2">
-          AI is analyzing every page to extract context and identify visual elements.
+          {fileItem.mineruStatus === 'uploading'
+            ? "Sending document to parsing engine for high-fidelity extraction."
+            : fileItem.mineruProgress
+              ? `Processing pages: ${fileItem.mineruProgress.current} / ${fileItem.mineruProgress.total}`
+              : "Analyzing document structure, detecting tables and charts..."}
         </p>
       </div>
     );
   }
 
   if (subItems.length === 0) {
-     return (
+    return (
       <div className="flex flex-col items-center justify-center h-full text-slate-500">
         <FileText className="w-16 h-16 text-slate-300 mb-4" />
         <h3 className="text-lg font-medium text-slate-800">No Items Detected</h3>
@@ -87,9 +118,9 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
           <div>
             <h2 className="text-2xl font-bold text-slate-800">{fileItem.file.name}</h2>
             {fileItem.globalContext && (
-               <p className="text-xs text-slate-400 mt-1 max-w-xl truncate" title={fileItem.globalContext}>
-                 Context: {fileItem.globalContext.substring(0, 150)}...
-               </p>
+              <p className="text-xs text-slate-400 mt-1 max-w-xl truncate" title={fileItem.globalContext}>
+                Context: {fileItem.globalContext.substring(0, 150)}...
+              </p>
             )}
             <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
               <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-100">
@@ -103,16 +134,26 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
               </span>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
-             <button 
+            {fileItem.mineruResultUrl && (
+              <a
+                href={fileItem.mineruResultUrl}
+                download={`${fileItem.file.name.replace('.pdf', '')}_mineru.zip`}
+                className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors flex items-center gap-2"
+                title="Download Raw Mineru Output"
+              >
+                <Download className="w-4 h-4" /> Download ZIP
+              </a>
+            )}
+            <button
               onClick={toggleAll}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2"
             >
               {selectedIds.size === subItems.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
               {selectedIds.size === subItems.length ? 'Deselect All' : 'Select All'}
             </button>
-            <button 
+            <button
               onClick={handleProcessClick}
               disabled={selectedIds.size === 0}
               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium shadow-sm transition-all flex items-center gap-2"
@@ -131,10 +172,10 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
             const isSelected = selectedIds.has(item.id);
             const isDone = item.status === 'completed';
             const isProcessing = item.status === 'processing';
-            
+
             return (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 onClick={() => !isProcessing && item.status !== 'completed' && toggleSelection(item.id)}
                 className={`
                   relative bg-white rounded-xl border transition-all duration-200 overflow-hidden flex flex-col group
@@ -145,7 +186,7 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
                 {/* Image Area */}
                 <div className="h-48 bg-slate-100 relative border-b border-slate-100">
                   <img src={item.previewUrl} alt="Preview" className="w-full h-full object-contain p-2" />
-                  
+
                   {/* Type Badge */}
                   <div className={`absolute top-2 left-2 px-2 py-1 rounded text-white text-[10px] font-bold uppercase backdrop-blur-sm flex items-center gap-1 shadow-sm
                     ${item.type === 'chart' ? 'bg-blue-600/90' : item.type === 'table' ? 'bg-orange-600/90' : 'bg-purple-600/90'}
@@ -153,7 +194,7 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
                     {getTypeIcon(item.type)}
                     {item.type.toUpperCase()}
                   </div>
-                  
+
                   {/* Page Badge */}
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/40 text-white text-[10px] backdrop-blur-sm">
                     Pg {item.pageNumber}
@@ -168,7 +209,7 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
                   )}
                   {isDone && (
                     <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
-                      <button 
+                      <button
                         onClick={(e) => { e.stopPropagation(); onViewResult(item); }}
                         className="bg-white text-green-700 px-4 py-2 rounded-full font-medium shadow-sm border border-green-200 flex items-center gap-2 hover:scale-105 transition-transform"
                       >

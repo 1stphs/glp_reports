@@ -11,9 +11,10 @@ interface MainViewProps {
   selectedFile: FileItem | undefined;
   onStartDigitization: () => void;
   onProcessPdfItems: (fileId: string, subItemIds: string[]) => void;
+  onStartMineruParse: (fileId: string) => void;
 }
 
-const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, onProcessPdfItems }) => {
+const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, onProcessPdfItems, onStartMineruParse }) => {
   const [activeTab, setActiveTab] = useState<'visual' | 'data' | 'json'>('visual');
   const [viewingSubItem, setViewingSubItem] = useState<SubItem | null>(null);
 

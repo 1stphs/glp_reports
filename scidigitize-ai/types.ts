@@ -121,5 +121,54 @@ export interface FileItem {
   // PDF Specific
   globalContext?: string; // Title, Abstract, or first page text
   subItems?: SubItem[];
+
+  // Mineru Parsing State
+  mineruStatus?: 'idle' | 'uploading' | 'processing' | 'done' | 'error';
+  mineruBatchId?: string;
+  mineruResultUrl?: string;
+  mineruProgress?: {
+    current: number;
+    total: number;
+  };
+}
+
+// --- Mineru API Types ---
+export interface MineruFile {
+  name: string;
+  data_id?: string;
+}
+
+export interface MineruBatchRequest {
+  files: MineruFile[];
+  model_version: 'vlm' | 'pipeline';
+}
+
+export interface MineruBatchResponse {
+  code: number;
+  msg: string;
+  data: {
+    batch_id: string;
+    file_urls: string[];
+  };
+}
+
+export interface MineruExtractResult {
+  file_name: string;
+  state: 'done' | 'waiting-file' | 'pending' | 'running' | 'failed' | 'converting';
+  err_msg?: string;
+  full_zip_url?: string;
+  extract_progress?: {
+    extracted_pages: number;
+    total_pages: number;
+    start_time: string;
+  };
+}
+
+export interface MineruResultResponse {
+  code: number;
+  data: {
+    batch_id: string;
+    extract_result: MineruExtractResult[];
+  };
 }
 

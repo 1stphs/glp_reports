@@ -8,11 +8,24 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/mineru-api': {
+          target: 'https://mineru.net',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/mineru-api/, '')
+        },
+        '/mineru-oss': {
+          target: 'https://mineru.oss-cn-shanghai.aliyuncs.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/mineru-oss/, '')
+        }
+      }
     },
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.mineru_token': JSON.stringify(env.mineru_token)
     },
     resolve: {
       alias: {
