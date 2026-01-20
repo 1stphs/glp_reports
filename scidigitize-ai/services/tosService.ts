@@ -40,37 +40,28 @@ export const uploadFileToTos = async (file: File): Promise<string> => {
 
         // 2. Upload via Fetch
         let uploadUrl = urlStr;
-        // Use the sanitized endpoint for matching
-        const endpoint = sdkEndpoint;
 
         if (isDev) {
             // In Dev, rewrite to use local proxy
-            // URL is https://endpoint/bucket/key... (Path Style)
-            // Proxy Target: /tos-proxy -> https://endpoint
+            // SDK generates Virtual-Hosted Style URL: https://bucket.endpoint/key?signature...
+            // We need to rewrite it to: /tos-proxy/key?signature...
+            // Because our proxy target is https://bucket.endpoint
 
-            // Matches https://endpoint or http://endpoint at start
-            const endpointRegex = new RegExp(`^https?://${endpoint.replace(/\./g, '\\.')}`);
-
-            if (endpointRegex.test(uploadUrl)) {
-                // Replace https://tos-cn-beijing.volces.com with /tos-proxy
-                uploadUrl = uploadUrl.replace(endpointRegex, '/tos-proxy');
-            } else {
-                // Fallback: If SDK ignored enablePathStyle (V-Host style), try to fix it.
-                // URL: https://bucket.endpoint/key
-                const vhostRegex = new RegExp(`^https?://${BUCKET_NAME}\\.${endpoint.replace(/\./g, '\\.')}`);
-                if (vhostRegex.test(uploadUrl)) {
-                    // rewrite to /tos-proxy/bucket
-                    uploadUrl = uploadUrl.replace(vhostRegex, `/tos-proxy/${BUCKET_NAME}`);
-                }
+            const vhostRegex = new RegExp(`^https?://${BUCKET_NAME}\\.${sdkEndpoint.replace(/\./g, '\\.')}`);
+            if (vhostRegex.test(uploadUrl)) {
+                // Replace https://bio-knowledgebase.tos-cn-beijing.volces.com with /tos-proxy
+                uploadUrl = uploadUrl.replace(vhostRegex, '/tos-proxy');
             }
         }
 
+        console.log('[TOS] Original URL:', urlStr);
+        console.log('[TOS] Proxy URL:', uploadUrl);
+
         const response = await fetch(uploadUrl, {
             method: 'PUT',
-            body: file,
-            headers: {
-                'Content-Type': file.type || 'application/octet-stream'
-            }
+            body: file
+            // NOTE: Do NOT add Content-Type header!
+            // The pre-signed URL signature does not include it, so adding it causes 403
         });
 
         if (!response.ok) {
@@ -79,9 +70,9 @@ export const uploadFileToTos = async (file: File): Promise<string> => {
 
         // 3. Return Public URL for Backend
         // The backend likely needs a clean URL.
-        const protocol = endpoint.startsWith('http') ? '' : 'https://';
-        // Construct standard URL
-        const publicUrl = `${protocol}${BUCKET_NAME}.${endpoint.replace(/^https?:\/\//, '')}/${fileName}`;
+        const protocol = sdkEndpoint.startsWith('http') ? '' : 'https://';
+        // Construct standard URL (Virtual-Hosted Style)
+        const publicUrl = `${protocol}${BUCKET_NAME}.${sdkEndpoint}/${fileName}`;
 
         return publicUrl;
     } catch (error) {

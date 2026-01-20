@@ -77,44 +77,53 @@ const App: React.FC = () => {
     try {
       // 1. Upload to Volcengine TOS
       const tosUrl = await uploadFileToTos(file);
+      console.log('[Upload] TOS Upload Success:', tosUrl);
 
-      // Update to Processing
+      // TOS upload success = task complete! 
+      // Mark as done immediately after TOS upload
       setFiles(prev => prev.map(f => f.id === pdfId ? {
         ...f,
-        mineruStatus: 'processing',
+        status: 'idle', // Ready
+        mineruStatus: 'done',
+        tosUrl: tosUrl, // Store the TOS URL
       } : f));
 
-      // 2. Trigger Custom Parsing Webhook
-      const results = await triggerCustomMineruParsing(tosUrl, file.name);
-      // We assume we get results for the single file we sent
-      // Flexible matching: check matches by filename or just take first if length 1
-      // The API returns an array of objects where each object keys include metadata.
-      // Our service already normalized this to MineruExtractResult[]
+      // 2. Trigger Custom Parsing Webhook (optional, in background)
+      // This is fire-and-forget, don't wait for results
+      try {
+        triggerCustomMineruParsing(tosUrl, file.name)
+          .then(results => {
+            console.log('[Mineru] Background parsing results:', results);
+            const result = results.find(r => r.file_name === file.name) || results[0];
 
-      const result = results.find(r => r.file_name === file.name) || results[0];
-
-      if (result && result.images && result.images.length > 0) {
-        // 3. Process the returned direct image URLs
-        const subItems = await processMineruDirectResponse(result.images, result.layout);
-
-        setFiles(prev => prev.map(f => f.id === pdfId ? {
-          ...f,
-          status: 'idle', // Ready
-          mineruStatus: 'done',
-          mineruResultUrl: result.full, // Link to Markdown
-          subItems: subItems,
-          mineruProgress: {
-            current: result.images!.length,
-            total: result.images!.length
-          }
-        } : f));
-      } else {
-        throw new Error("Parsing finished but no images were returned.");
+            if (result && result.images && result.images.length > 0) {
+              // Update with Mineru results in background
+              processMineruDirectResponse(result.images, result.layout)
+                .then(subItems => {
+                  setFiles(prev => prev.map(f => f.id === pdfId ? {
+                    ...f,
+                    mineruResultUrl: result.full,
+                    subItems: subItems,
+                    mineruProgress: {
+                      current: result.images!.length,
+                      total: result.images!.length
+                    }
+                  } : f));
+                })
+                .catch(err => console.warn('[Mineru] Failed to process images:', err));
+            }
+          })
+          .catch(err => {
+            console.warn('[Mineru] Background parsing failed (non-critical):', err);
+            // Don't update status to error - TOS upload was successful
+          });
+      } catch (mineruErr) {
+        console.warn('[Mineru] Failed to trigger parsing (non-critical):', mineruErr);
       }
 
     } catch (e) {
-      console.error("Mineru Flow Error", e);
-      // Extract error message potentially
+      console.error("Upload Error", e);
+      // Only show error if TOS upload itself failed
       let msg = (e as any).message || "Unknown error";
       setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, status: 'error', mineruStatus: 'error', errorMessage: msg } : f));
     }

@@ -14,6 +14,8 @@ interface CustomMineruResponse {
 }
 
 export const triggerCustomMineruParsing = async (fileUrl: string, fileName: string): Promise<MineruExtractResult[]> => {
+    console.log('[Mineru] Triggering parsing for:', fileUrl);
+
     const response = await fetch(TRIGGER_URL, {
         method: 'POST',
         headers: {
@@ -28,10 +30,28 @@ export const triggerCustomMineruParsing = async (fileUrl: string, fileName: stri
     });
 
     if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Mineru] API Error:', response.status, errorText);
         throw new Error(`Mineru Webhook Failed: ${response.status} ${response.statusText}`);
     }
 
-    const data: CustomMineruResponse = await response.json();
+    // Get response as text first to debug
+    const responseText = await response.text();
+    console.log('[Mineru] Raw Response:', responseText);
+
+    if (!responseText || responseText.trim() === '') {
+        throw new Error('Mineru API returned empty response');
+    }
+
+    let data: CustomMineruResponse;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        console.error('[Mineru] JSON Parse Error:', e);
+        throw new Error(`Mineru API returned invalid JSON: ${responseText.substring(0, 200)}`);
+    }
+
+    console.log('[Mineru] Parsed Response:', data);
 
     // Parse the dynamic key result.
     // The sample shows keys like "lg79da2k01k". We need to find the one that has "images".

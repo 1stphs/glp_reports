@@ -20,7 +20,9 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/mineru-oss/, '')
         },
         '/tos-proxy': {
-          target: 'https://tos-cn-beijing.volces.com',
+          // IMPORTANT: SDK generates Virtual-Hosted Style URLs (bucket.endpoint)
+          // The signature is calculated based on this Host, so proxy must forward to the same
+          target: 'https://bio-knowledgebase.tos-cn-beijing.volces.com',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/tos-proxy/, '')
         }
