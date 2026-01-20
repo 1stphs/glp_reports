@@ -18,6 +18,11 @@ export default defineConfig(({ mode }) => {
           target: 'https://mineru.oss-cn-shanghai.aliyuncs.com',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/mineru-oss/, '')
+        },
+        '/tos-proxy': {
+          target: 'https://tos-cn-beijing.volces.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/tos-proxy/, '')
         }
       }
     },
@@ -25,7 +30,12 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.mineru_token': JSON.stringify(env.mineru_token)
+      'process.env.mineru_token': JSON.stringify(env.mineru_token),
+      'process.env.TOS_ACCESS_KEY': JSON.stringify(env.TOS_ACCESS_KEY),
+      'process.env.TOS_SECRET_KEY': JSON.stringify(env.TOS_SECRET_KEY),
+      'process.env.TOS_REGION': JSON.stringify(env.TOS_REGION),
+      'process.env.TOS_BUCKET': JSON.stringify(env.TOS_BUCKET),
+      'process.env.TOS_ENDPOINT': JSON.stringify(env.TOS_ENDPOINT)
     },
     resolve: {
       alias: {

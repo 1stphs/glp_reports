@@ -162,6 +162,11 @@ export interface MineruExtractResult {
     total_pages: number;
     start_time: string;
   };
+  // Custom API additions
+  images?: string[];
+  full?: string; // Markdown URL
+  layout?: string; // JSON URL
+  origin?: string; // Original URL
 }
 
 export interface MineruResultResponse {
