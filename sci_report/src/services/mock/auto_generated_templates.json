@@ -1,0 +1,1412 @@
+[
+  {
+    "id": "NS25318BV01",
+    "name": "Data Summary - Unknown Species - Unknown Matrix",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Unknown Species"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from Qced NS25318BV01二次数据汇总@20250916（1-6）.md",
+    "variables": {},
+    "examples": [
+      "| 注释*：残留样品超出接受标准，已对分析批进行残留评估，评估结果是对质控样品和验证样品定量结果影响均小于5%，所以不影响分析批结果。 | nan                  | nan                 | nan             | nan           | nan                      | nan                     | nan          | nan          |",
+      "| 试验条件：在超低温冷冻冰箱（-70~-90 °C）冻存至少12小时，在冰水浴白光条件下融化。 | nan          | nan          | nan          | nan          | nan          | nan          |",
+      "| 试验条件：在自动进样器（5°C）中放置78小时后的稳定性 | nan          | nan          | nan          | nan          | nan          |          nan | nan          | nan                 |"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "Qced NS25318BV01二次数据汇总@20250916（1-6）.xlsx",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-2",
+        "title": "Source Information",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-3",
+        "title": "Summary",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "Content",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "Sheet: 表1_schedule",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-6",
+        "title": "Sheet: 表2_系统适用性",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "Sheet: 表3_批量样品检测过程的残留",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "Sheet: 表4_Selectivity",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-9",
+        "title": "Sheet: 表5_特异性",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-10",
+        "title": "Sheet: 表6_ME",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-11",
+        "title": "Sheet: 表9_Inter QC",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-12",
+        "title": "Sheet: 表11_Recovery",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-13",
+        "title": "Sheet: 表13_Dilution",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-14",
+        "title": "Sheet: 表18_ST",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-15",
+        "title": "Sheet: 表19_FT",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-16",
+        "title": "Sheet: 表20_PSS",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-17",
+        "title": "Sheet: 表22_Blood",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-18",
+        "title": "Sheet: 表23_溶血效应",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-19",
+        "title": "Sheet: 表24_处理后样品再进样重现性",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "NN25318BV01",
+    "name": "Data Summary - Rat (SD) - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Rat (SD)"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from Qced NN25318BV01二次数据汇总-LTS(Run7~8)@20251211.md",
+    "variables": {
+      "Instrument System": "Shimadzu LC-40D x3",
+      "QC Levels": "质控浓度（QC） RENS25318：0.300 ng/mL；2.200 ng/mL；15.000 ng/mL；37.500 ng/mL"
+    },
+    "examples": [
+      "| 流动相及流速                       | 流动相A：含0.3%甲酸的水溶液                                                           | nan                 |",
+      "| nan                          | 流动相B：含0.3%甲酸的乙腈溶液                                                          | nan                 |",
+      "| 柱温                           | 50.0°C                                                                     | nan                 |"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "Qced NN25318BV01二次数据汇总-LTS(Run7~8)@20251211.xlsx",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-2",
+        "title": "Source Information",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-3",
+        "title": "Summary",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "Content",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "Sheet: 1.1",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-6",
+        "title": "Sheet: 2.1 标准品",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "Sheet: 2.2 内标",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "Sheet: 2.5 试剂",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-9",
+        "title": "Sheet: 2.6 空白基质",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-10",
+        "title": "Sheet: 2.9 标准曲线质控样品的配制",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-11",
+        "title": "Sheet: 表1_schedule",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-12",
+        "title": "Sheet: 表2_系统适用性",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-13",
+        "title": "Sheet: 表3_批量样品检测过程的残留",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-14",
+        "title": "Sheet: 表7_Regression",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-15",
+        "title": "Sheet: 表8_curve",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-16",
+        "title": "Sheet: 表10 QC (除准确度精密度分析批）",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-17",
+        "title": "Sheet: 表14_stock ST",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-18",
+        "title": "Sheet: 表15_spike ST",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-19",
+        "title": "Sheet: 表16_stock LT",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-20",
+        "title": "Sheet: 表17_spike LT",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-21",
+        "title": "Sheet: 表21_LTS",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-22",
+        "title": "Sheet: 表24_内标适用性考察",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-23",
+        "title": "Sheet: 天平",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "SS25071BV01",
+    "name": "Method Validation - Rat (SD) - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Rat (SD)"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from SS25071BV01（大鼠）生物分析验证方案@20250515-中文_final.md",
+    "variables": {
+      "Instrument System": "AB SCIEX/TRIPLE QUADTM6500+"
+    },
+    "examples": [
+      "**游离型含量 = 纯度 × 游离型分子量 / 盐分子量= 92.7% × 13800.06 / 14766.06= 86.6%",
+      "精密称取适量待测物A标准品于合适容器中，加入适量稀释液（含0.1%TEA的MeOH:H2O = 50:50，v/v溶液）溶解、摇匀，配制成浓度为2.000 mg/mL的待测物A (free form) 的反义链和正义链的标曲/质控储备液。",
+      "精密称取适量内标A内标标准品于合适容器中，加入适量稀释液（含0.1%TEA的MeOH: H2O = 50: 50，v/v溶液）溶解、摇匀，配制成浓度为1.000 mg/mL的内标储备液。"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "1 引言",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-1-1",
+            "title": "1.1 验证试验名称",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-2",
+            "title": "1.2 验证试验编号",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-3",
+            "title": "1.3 验证目的",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-4",
+            "title": "1.4 试验机构",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-5",
+            "title": "1.5 委托方",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-6",
+            "title": "1.6 委托方负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-7",
+            "title": "1.7 验证负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-8",
+            "title": "1.8 主要操作人员",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-9",
+            "title": "1.9 验证日程",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-10",
+            "title": "1.10 指导原则",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-2",
+        "title": "2 材料和方法",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-2-1",
+            "title": "2.1 标准品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-2",
+            "title": "2.2 内标",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-3",
+            "title": "2.3 安全防护",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-4",
+            "title": "2.4 剩余标准品及内标的返还",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-5",
+            "title": "2.5 试剂",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-6",
+            "title": "2.6 空白基质",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-7",
+            "title": "2.7 主要仪器",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-8",
+            "title": "2.8 材料和方法",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-9",
+            "title": "2.9 标准曲线和质控样品的配制",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-3",
+        "title": "3 实验实施",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "4 数据处理",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "5 方法学验证结果",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-5-1",
+            "title": "5.1 系统适用性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-2",
+            "title": "5.2 残留",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-3",
+            "title": "5.3 选择性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-4",
+            "title": "5.4 特异性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-4-1",
+                "title": "5.4.1 待测物对内标的干扰",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-4-2",
+                "title": "5.4.2 内标对待测物的干扰",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-5",
+            "title": "5.5 基质效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-6",
+            "title": "5.6 标准曲线及范围",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-7",
+            "title": "5.7 批内/批间准确度及精密度",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-8",
+            "title": "5.8 质控样品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-9",
+            "title": "5.9 回收率",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-9-1",
+                "title": "5.9.1 待测物的提取回收率",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-9-2",
+                "title": "5.9.2 内标的提取回收率",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-10",
+            "title": "5.10 稀释可靠性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-11",
+            "title": "5.11 稳定性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-11-1",
+                "title": "5.11.1 标准品储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-2",
+                "title": "5.11.2 内标储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-3",
+                "title": "5.11.3 质控样品稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-4",
+                "title": "5.11.4 全血稳定性",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-12",
+            "title": "5.12 溶血效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-13",
+            "title": "5.13 分析批最大进样数",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-6",
+        "title": "6 结论",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "7 偏离",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "8 特殊情况说明",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-9",
+        "title": "9 归档",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "SS25071BV02",
+    "name": "Method Validation - Cynomolgus Monkey - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Cynomolgus Monkey"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from SS25071BV02（食蟹猴）生物分析验证方案@20250520-中文_final.md",
+    "variables": {
+      "Instrument System": "AB SCIEX/TRIPLE QUADTM6500+"
+    },
+    "examples": [
+      "**游离型含量 = 纯度 × 游离型分子量 / 盐分子量= 92.7% × 13800.06 / 14766.06= 86.6%",
+      "精密称取适量待测物A标准品于合适容器中，加入适量稀释液（含0.1%TEA的MeOH:H2O = 50:50，v/v溶液）溶解、摇匀，配制成浓度为2.000 mg/mL的待测物A (free form) 的反义链和正义链的标曲/质控储备液。",
+      "精密称取适量HBV263内标标准品于合适容器中，加入适量稀释液（含0.1%TEA的MeOH: H2O = 50: 50，v/v溶液）溶解、摇匀，配制成浓度为1.000 mg/mL的内标储备液。"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "1 引言",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-1-1",
+            "title": "1.1 验证试验名称",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-2",
+            "title": "1.2 验证试验编号",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-3",
+            "title": "1.3 验证目的",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-4",
+            "title": "1.4 试验机构",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-5",
+            "title": "1.5 委托方",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-6",
+            "title": "1.6 委托方负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-7",
+            "title": "1.7 验证负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-8",
+            "title": "1.8 主要操作人员",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-9",
+            "title": "1.9 验证日程",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-10",
+            "title": "1.10 指导原则",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-2",
+        "title": "2 材料和方法",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-2-1",
+            "title": "2.1 标准品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-2",
+            "title": "2.2 内标",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-3",
+            "title": "2.3 安全防护",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-4",
+            "title": "2.4 剩余标准品及内标的返还",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-5",
+            "title": "2.5 试剂",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-6",
+            "title": "2.6 空白基质",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-7",
+            "title": "2.7 主要仪器",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-8",
+            "title": "2.8 材料和方法",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-9",
+            "title": "2.9 标准曲线和质控样品的配制",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-3",
+        "title": "3 实验实施",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "4 数据处理",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "5 方法学验证结果",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-5-1",
+            "title": "5.1 系统适用性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-2",
+            "title": "5.2 残留",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-3",
+            "title": "5.3 选择性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-4",
+            "title": "5.4 特异性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-4-1",
+                "title": "5.4.1 待测物对内标的干扰",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-4-2",
+                "title": "5.4.2 内标对待测物的干扰",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-5",
+            "title": "5.5 基质效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-6",
+            "title": "5.6 标准曲线及范围",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-7",
+            "title": "5.7 批内/批间准确度及精密度",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-8",
+            "title": "5.8 质控样品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-9",
+            "title": "5.9 回收率",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-9-1",
+                "title": "5.9.1 待测物的提取回收率",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-9-2",
+                "title": "5.9.2 内标的提取回收率",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-10",
+            "title": "5.10 稀释可靠性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-11",
+            "title": "5.11 稳定性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-11-1",
+                "title": "5.11.1 标准品储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-2",
+                "title": "5.11.2 内标储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-3",
+                "title": "5.11.3 质控样品稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-4",
+                "title": "5.11.4 全血稳定性",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-12",
+            "title": "5.12 溶血效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-13",
+            "title": "5.13 分析批最大进样数",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-6",
+        "title": "6 结论",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "7 偏离",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "8 特殊情况说明",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-9",
+        "title": "9 归档",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "SS25255BV01",
+    "name": "General Study - Rat (SD) - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Rat (SD)"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from SS25255BV01-Rat_Dxd_free-BA-REPORT-final-钱哲元@20251226.md",
+    "variables": {
+      "Instrument System": "AB SCIEX TRIPLE QUADTM 6500+质谱仪联合Waters超高效液相色谱系统（设备编号：EQ201758）",
+      "Column": "Shim-pack GIST-HP 3μm C18-AQ 2.1×100mm(HSS)",
+      "QC Levels": "1.500 pmol/mL"
+    },
+    "examples": [
+      "系统适用性 | 待测物A：待测物保留时间CV≤ 0.6%；内标保留时间CV≤ 0.0%；面积比CV≤6.0%； | 待测物A：待测物保留时间CV≤ 0.6%；内标保留时间CV≤ 0.0%；面积比CV≤6.0%；",
+      "冻融稳定性 | 待测物A（潜在药物A存在下）：-70--90°C /冰水浴白光下至少冻融循环4次稳定 | 待测物A（潜在药物A存在下）：-70--90°C /冰水浴白光下至少冻融循环4次稳定",
+      "处理后样品的稳定性 | 待测物A（潜在药物A存在下）：在自动进样器（5°C）条件下可稳定保存至少77小时 | 待测物A（潜在药物A存在下）：在自动进样器（5°C）条件下可稳定保存至少77小时"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "SS25255BV01-Rat_Dxd_free-BA-REPORT-final-钱哲元@20251226.docx",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-2",
+        "title": "Source Information",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-3",
+        "title": "Summary",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "Content",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "摘要",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-6",
+        "title": "引言",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "材料和方法",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "材料和方法",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "SS25255NM01",
+    "name": "General Study - Mouse (Nude/Balb-c) - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Mouse (Nude/Balb-c)"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from SS25255NM01-Mouse Plasma-BA-REPORT-final-钱哲元@20251226.md",
+    "variables": {
+      "Instrument System": "AB SCIEX/TRIPLE QUADTM 6500+质谱仪联合Shimadzu/LC-40D x3液相色谱系统（设备编号：EQSH24147）",
+      "Column": "Shim-pack Scepter C18-120 3μm 2.1×50 mm",
+      "QC Levels": "1.500 pmol/mL；"
+    },
+    "examples": [
+      "待测物A除LLOQ QC以外的所有浓度质控的批内准确度偏差范围为-0.7% - 0.9%，批内精密度最大值为9.4%。LLOQ QC的批内准确度偏差为-9.4%，批内精密度为8.5%。",
+      "待测物B（待测物B-1）除LLOQ QC以外的所有浓度质控的批内准确度偏差范围为2.1% - 6.6%，批内精密度最大值为3.2%。LLOQ QC的批内准确度偏差为-0.1%，批内精密度为5.7%。",
+      "流动相及流速 | 流动相A：含0.1%甲酸和2mM乙酸铵的水溶液 | 流动相A：含0.1%甲酸和2mM乙酸铵的水溶液"
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "SS25255NM01-Mouse Plasma-BA-REPORT-final-钱哲元@20251226.docx",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-2",
+        "title": "Source Information",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-3",
+        "title": "Summary",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "Content",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "摘要",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-6",
+        "title": "引言",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "材料和方法",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "材料和方法",
+        "type": "section",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": "SS24050BV01",
+    "name": "Method Validation - Minipig - Plasma",
+    "version": "v1.0 (Auto)",
+    "species": [
+      "Minipig"
+    ],
+    "regulation": "NMPA/FDA",
+    "status": "Published",
+    "lastModified": "2026-01-21",
+    "author": "System Extractor",
+    "description": "Auto-generated template from 验证方案SS24050BV01.md",
+    "variables": {},
+    "examples": [
+      "接受标准：在同一分析批中待测物及内标保留时间的变异系数（%CV）应不超出5.0%，待测物与内标色谱峰面积比值的变异系数（%CV）应不超出15.0%。",
+      "接受标准：双空白样品中待测物保留时间处响应不超过同一分析批标曲符合接受标准的定量下限（LLOQ）待测物响应（均值）的20.0%，内标保留时间处响应不超过同一分析批符合接受标准的标准曲线定量下限内标响应（均值）的5.0%。",
+      "若影响率不高于5%，可认为实际发生的残留不会影响下一个样品的定量；若残留影响率大于5%，则说明下一个样品的定量结果受到了残留的影响，样品应进行相应处理："
+    ],
+    "chapters": [
+      {
+        "id": "CH-1",
+        "title": "1 引言",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-1-1",
+            "title": "1.1 验证试验名称",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-2",
+            "title": "1.2 验证试验编号",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-3",
+            "title": "1.3 验证目的",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-4",
+            "title": "1.4 试验机构",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-5",
+            "title": "1.5 委托方",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-6",
+            "title": "1.6 委托方负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-7",
+            "title": "1.7 验证负责人",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-8",
+            "title": "1.8 主要操作人员",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-9",
+            "title": "1.9 验证日程",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-1-10",
+            "title": "1.10 指导原则",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-2",
+        "title": "2 材料和方法",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-2-1",
+            "title": "2.1 标准品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-2",
+            "title": "2.2 内标",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-3",
+            "title": "2.3 安全防护",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-4",
+            "title": "2.4 剩余标准品及内标的返还",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-5",
+            "title": "2.5 试剂",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-6",
+            "title": "2.6 空白基质",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-7",
+            "title": "2.7 主要仪器",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-8",
+            "title": "2.8 材料和方法",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-2-9",
+            "title": "2.9 标准曲线和质控样品的配制",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-3",
+        "title": "3 实验实施",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-4",
+        "title": "4 数据处理",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-5",
+        "title": "5 方法学验证结果",
+        "type": "section",
+        "children": [
+          {
+            "id": "CH-5-1",
+            "title": "5.1 系统适用性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-2",
+            "title": "5.2 残留",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-3",
+            "title": "5.3 选择性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-4",
+            "title": "5.4 特异性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-4-1",
+                "title": "5.4.1 待测物对内标的干扰",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-4-2",
+                "title": "5.4.2 内标对待测物的干扰",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-5",
+            "title": "5.5 基质效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-6",
+            "title": "5.6 标准曲线及范围",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-7",
+            "title": "5.7 批内/批间准确度及精密度",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-8",
+            "title": "5.8 质控样品",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-9",
+            "title": "5.9 回收率",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-9-1",
+                "title": "5.9.1 待测物的提取回收率",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-9-2",
+                "title": "5.9.2 内标的提取回收率",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-10",
+            "title": "5.10 稀释可靠性",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-11",
+            "title": "5.11 稳定性",
+            "type": "subsection",
+            "children": [
+              {
+                "id": "CH-5-11-1",
+                "title": "5.11.1 标准品储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-2",
+                "title": "5.11.2 内标储备液/工作液稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-3",
+                "title": "5.11.3 质控样品稳定性",
+                "type": "subsection",
+                "children": []
+              },
+              {
+                "id": "CH-5-11-4",
+                "title": "5.11.4 全血稳定性",
+                "type": "subsection",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "CH-5-12",
+            "title": "5.12 溶血效应",
+            "type": "subsection",
+            "children": []
+          },
+          {
+            "id": "CH-5-13",
+            "title": "5.13 分析批最大进样数",
+            "type": "subsection",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "CH-6",
+        "title": "6 结论",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-7",
+        "title": "7 偏离",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-8",
+        "title": "8 特殊情况说明",
+        "type": "section",
+        "children": []
+      },
+      {
+        "id": "CH-9",
+        "title": "9 归档",
+        "type": "section",
+        "children": []
+      }
+    ]
+  }
+]

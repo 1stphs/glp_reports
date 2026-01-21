@@ -1,7 +1,14 @@
 
 import React from 'react';
 
-const DataContractEditor: React.FC = () => {
+
+interface DataContractEditorProps {
+    template?: any;
+}
+
+const DataContractEditor: React.FC<DataContractEditorProps> = ({ template }) => {
+    const variables = template?.variables || {};
+
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{
@@ -14,31 +21,23 @@ const DataContractEditor: React.FC = () => {
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-4)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
-                {/* Mock Tree Editor UI */}
-                <div style={{ paddingLeft: '0' }}>
-                    <span style={{ color: '#0550ae' }}>"chapter_id"</span>: <span style={{ color: '#a31515' }}>"CH_2_PK_SUMMARY"</span>,
-                </div>
-                <div style={{ paddingLeft: '0' }}>
-                    <span style={{ color: '#0550ae' }}>"inputs"</span>: {'{'}
-                </div>
-                <div style={{ paddingLeft: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#0550ae' }}>"mean_cmax"</span>:
-                    <span style={{ color: '#098658' }}>Number</span>
-                    <span style={{ fontSize: '10px', backgroundColor: '#e0e7ff', color: '#4338ca', padding: '1px 4px', borderRadius: '4px' }}>Required</span>
-                </div>
-                <div style={{ paddingLeft: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#0550ae' }}>"mean_auc"</span>:
-                    <span style={{ color: '#098658' }}>Number</span>
-                    <span style={{ fontSize: '10px', backgroundColor: '#e0e7ff', color: '#4338ca', padding: '1px 4px', borderRadius: '4px' }}>Required</span>
-                </div>
-                <div style={{ paddingLeft: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#0550ae' }}>"tmax_range"</span>:
-                    <span style={{ color: '#098658' }}>[Min, Max]</span>
-                </div>
-                <div style={{ paddingLeft: '0' }}>{'}'},</div>
+                {Object.keys(variables).length > 0 ? (
+                    Object.entries(variables).map(([key, value]) => (
+                        <div key={key} style={{ marginBottom: '8px' }}>
+                            <div style={{ color: '#0550ae' }}>"{key}"</div>
+                            <div style={{ paddingLeft: '20px', color: '#098658', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                {String(value)}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                        No variables extracted for this template.
+                    </div>
+                )}
 
-                <div style={{ paddingLeft: '0', marginTop: '8px' }}>
-                    <span style={{ color: '#0550ae' }}>"rules"</span>: [
+                <div style={{ paddingLeft: '0', marginTop: '16px', borderTop: '1px dashed #ddd', paddingTop: '8px' }}>
+                    <span style={{ color: '#0550ae' }}>"compliance_rules"</span>: [
                 </div>
                 <div style={{ paddingLeft: '20px' }}>
                     {'{'} <span style={{ color: '#0550ae' }}>"condition"</span>: <span style={{ color: '#a31515' }}>"cv &lt; 15%"</span>, <span style={{ color: '#0550ae' }}>"severity"</span>: <span style={{ color: '#a31515' }}>"warning"</span> {'}'}

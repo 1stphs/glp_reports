@@ -1,23 +1,26 @@
 
 import React, { useState } from 'react';
 
-// --- Mock Data ---
+import templatesData from '../../services/mock/auto_generated_templates.json';
+
+// --- Types ---
 interface Template {
     id: string;
     name: string;
     version: string;
     species: string[];
-    regulation: 'FDA' | 'NMPA' | 'OECD';
-    status: 'Published' | 'Draft' | 'Reviewing';
+    regulation: string; // Changed from literal union to string to accommodate various data
+    status: string; // Changed from literal union
     lastModified: string;
     author: string;
+    description?: string; // Added from auto-generation
+    examples?: string[]; // Added from auto-generation
 }
 
-const MOCK_TEMPLATES: Template[] = [
+// Convert JSON data to match interface if needed, or use directly
+const ALL_TEMPLATES: Template[] = templatesData.length > 0 ? templatesData as Template[] : [
+    // Fallback if JSON empty
     { id: 'T001', name: 'NMPA_PK_Report_Template', version: 'v5.2', species: ['Beagle Dog', 'Cynomolgus Monkey'], regulation: 'NMPA', status: 'Published', lastModified: '2026-01-15', author: 'Dr. Wang' },
-    { id: 'T002', name: 'FDA_Tox_Report_Acute', version: 'v3.0', species: ['Rat', 'Mouse'], regulation: 'FDA', status: 'Published', lastModified: '2025-12-10', author: 'Sarah J.' },
-    { id: 'T003', name: 'General_TK_Analysis_Protocol', version: 'v1.1-draft', species: ['All'], regulation: 'OECD', status: 'Draft', lastModified: '2026-01-20', author: 'Li Ming' },
-    { id: 'T004', name: 'Immunogenicity_Assay_Report', version: 'v2.0', species: ['Humanized Mice'], regulation: 'FDA', status: 'Reviewing', lastModified: '2026-01-18', author: 'Quality_QA' },
 ];
 
 interface TemplateListViewProps {
@@ -28,13 +31,14 @@ const TemplateListView: React.FC<TemplateListViewProps> = ({ onNavigate }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterReg, setFilterReg] = useState<string>('All');
 
-    const filteredTemplates = MOCK_TEMPLATES.filter(t => {
+    const filteredTemplates = ALL_TEMPLATES.filter(t => {
         const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesReg = filterReg === 'All' || t.regulation === filterReg;
+        // Simple filter logic update since 'regulation' is now a broad string in some cases
+        const matchesReg = filterReg === 'All' || t.regulation.includes(filterReg);
         return matchesSearch && matchesReg;
     });
 
-    const StatusBadge = ({ status }: { status: Template['status'] }) => {
+    const StatusBadge = ({ status }: { status: string }) => {
         let color = '#666';
         let bg = '#eee';
         if (status === 'Published') { color = 'var(--color-status-pass)'; bg = 'var(--color-status-pass-bg)'; }
