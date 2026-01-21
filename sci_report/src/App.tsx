@@ -4,7 +4,6 @@ import { StudyProvider } from './contexts/StudyContext';
 import CellDetailView from './views/CellDetail/CellDetailView';
 import ControlCenterView from './views/ControlCenter/ControlCenterView';
 import HomepageView from './views/Homepage/HomepageView';
-import StudyDashboard from './views/Homepage/Dashboard/StudyDashboard';
 import TemplateListView from './views/StandardLibrary/TemplateListView';
 import TemplateDetailView from './views/StandardLibrary/TemplateDetailView';
 import GlobalSidebar from './components/common/GlobalSidebar';
@@ -45,7 +44,7 @@ const MainLayout = ({ children, onHome, currentView, onNavigate }: {
 );
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = React.useState<'home' | 'dashboard' | 'control' | 'detail' | 'library' | 'library_detail'>('home');
+  const [currentView, setCurrentView] = React.useState<'home' | 'control' | 'detail' | 'library' | 'library_detail'>('home');
   const [selectedTemplateId, setSelectedTemplateId] = React.useState<string | undefined>(undefined);
 
   return (
@@ -57,7 +56,6 @@ const App: React.FC = () => {
       >
 
         {currentView === 'home' && <HomepageView onNavigate={(view) => setCurrentView(view)} />}
-        {currentView === 'dashboard' && <StudyDashboard onNavigate={(view) => setCurrentView(view)} />}
         {currentView === 'library' && <TemplateListView onNavigate={(view, params) => {
           setCurrentView(view as any);
           if (params && params.id) setSelectedTemplateId(params.id);
