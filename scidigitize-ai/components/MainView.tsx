@@ -5,16 +5,17 @@ import DataTable from './DataTable';
 import GenericDataTable from './GenericDataTable';
 import InfographicVisualizer from './InfographicVisualizer';
 import PdfDashboard from './PdfDashboard';
-import { Download, Sparkles, Maximize2, FileDigit, ArrowLeft, Network, Table, BarChart3, FileText } from 'lucide-react';
+import { Download, Sparkles, Maximize2, FileDigit, ArrowLeft, Network, Table, BarChart3, FileText, Play, Loader2 } from 'lucide-react';
 
 interface MainViewProps {
   selectedFile: FileItem | undefined;
   onStartDigitization: () => void;
   onProcessPdfItems: (fileId: string, subItemIds: string[]) => void;
   onStartMineruParse: (fileId: string) => void;
+  onStartImageAnalysis: (fileId: string) => void;
 }
 
-const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, onProcessPdfItems, onStartMineruParse }) => {
+const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, onProcessPdfItems, onStartMineruParse, onStartImageAnalysis }) => {
   const [activeTab, setActiveTab] = useState<'visual' | 'data' | 'json'>('visual');
   const [viewingSubItem, setViewingSubItem] = useState<SubItem | null>(null);
 
@@ -33,19 +34,67 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
           Convert complex scientific plots into reusable CSV data. Optimized for Pharmacokinetics (PK), Log-Log plots, and Multi-subject series.
         </p>
 
-        <button
-          onClick={onStartDigitization}
-          className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 text-lg hover:-translate-y-1"
-        >
-          <Sparkles className="w-5 h-5" />
-          Begin New Digitization
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+              if (input) {
+                input.accept = "image/*";
+                input.click();
+              }
+            }}
+            className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 text-lg hover:-translate-y-1"
+          >
+            <Sparkles className="w-5 h-5" />
+            Digitize Images
+          </button>
+
+          <button
+            onClick={() => {
+              const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+              if (input) {
+                input.accept = "application/pdf,.doc,.docx,.ppt,.pptx";
+                input.click();
+              }
+            }}
+            className="px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-semibold shadow-sm transition-all flex items-center gap-2 text-lg hover:-translate-y-1"
+          >
+            <FileText className="w-5 h-5 text-indigo-500" />
+            Parse Documents
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- IDLE / READY STATE (New Logic) ---
+  // If document is idle, show the "Start Parsing" card instead of the Dashboard
+  if ((selectedFile.type === 'pdf' || selectedFile.type === 'document') && selectedFile.mineruStatus === 'idle') {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-50/50">
+        <div className="flex flex-col items-center max-w-2xl w-full bg-white p-12 rounded-2xl border border-slate-200 shadow-sm border-dashed">
+          <div className="w-24 h-24 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
+            <FileText className="w-12 h-12 text-indigo-600" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">{selectedFile.file.name}</h3>
+          <p className="text-slate-500 mb-8 text-center max-w-md">
+            Ready to parse. This document will be uploaded to Mineru for deep layout analysis and image extraction.
+          </p>
+          <button
+            onClick={() => onStartMineruParse(selectedFile.id)}
+            className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg hover:shadow-indigo-200 transition-all hover:-translate-y-1"
+          >
+            <Play className="w-5 h-5 fill-current" />
+            Start Document Parsing
+          </button>
+        </div>
       </div>
     );
   }
 
   // --- PDF DASHBOARD MODE ---
-  if (selectedFile.type === 'pdf' && !viewingSubItem) {
+  // Only show this if NOT idle (i.e., processing, done, or error)
+  if ((selectedFile.type === 'pdf' || selectedFile.type === 'document') && !viewingSubItem) {
     return (
       <PdfDashboard
         fileItem={selectedFile}
@@ -268,8 +317,31 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
             </div>
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-slate-400">
-            <p>Waiting to process...</p>
+          <div className="h-full flex flex-col items-center justify-center p-8">
+            {/* Idle State with Manual Trigger */}
+            {selectedFile && selectedFile.type === 'image' && (
+              <div className="flex flex-col items-center max-w-2xl w-full">
+                <img src={selectedFile.previewUrl} className="max-h-[400px] rounded-lg shadow-md mb-8 border border-slate-200" alt="Preview" />
+                <button
+                  onClick={() => onStartImageAnalysis(selectedFile.id)}
+                  className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg hover:shadow-indigo-200 transition-all hover:-translate-y-1"
+                >
+                  <Play className="w-5 h-5 fill-current" />
+                  Run Image Analysis
+                </button>
+                <p className="text-slate-500 mt-4 text-sm">Gemini 3 Pro will extract data and structure.</p>
+              </div>
+            )}
+
+
+
+            {/* Fallback for other states */}
+            {selectedFile && ((selectedFile.type === 'pdf' || selectedFile.type === 'document') && selectedFile.mineruStatus !== 'idle') && (
+              <div className="flex flex-col items-center text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                <p>Processing Document...</p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -22,11 +22,19 @@ const App: React.FC = () => {
   const handleUpload = async (fileList: FileList) => {
     const uploadedFiles = Array.from(fileList);
 
-    // Separate PDFs and Images
-    const pdfFiles = uploadedFiles.filter(f => f.type === 'application/pdf');
+    // Separate Documents (PDF/Word/PPT) and Images
+    const docFiles = uploadedFiles.filter(f =>
+      f.type === 'application/pdf' ||
+      f.type.includes('msword') ||
+      f.type.includes('wordprocessingml') ||
+      f.type.includes('presentation') ||
+      f.type.includes('powerpoint') ||
+      f.name.endsWith('.doc') || f.name.endsWith('.docx') || f.name.endsWith('.ppt') || f.name.endsWith('.pptx') || f.name.endsWith('.pdf')
+    );
+
     const imageFiles = uploadedFiles.filter(f => f.type.startsWith('image/'));
 
-    // Handle normal images immediately
+    // Handle normal images immediately (Gemini)
     if (imageFiles.length > 0) {
       const newImageFiles: FileItem[] = imageFiles.map(file => ({
         id: generateId(),
@@ -40,72 +48,65 @@ const App: React.FC = () => {
       if (!selectedFileId && newImageFiles.length > 0) setSelectedFileId(newImageFiles[0].id);
     }
 
-    // Handle PDFs via Mineru (TOS + Custom API)
-    if (pdfFiles.length > 0) {
-      setIsScanning(true);
-      try {
-        for (const pdfFile of pdfFiles) {
-          await processPdfViaMineru(pdfFile);
+    // Handle Docs via Mineru (TOS + Custom API)
+    if (docFiles.length > 0) {
+      for (const docFile of docFiles) {
+        // Avoid duplicates if image filter picked it up
+        if (!docFile.type.startsWith('image/')) {
+          const docId = generateId();
+          const newDocItem: FileItem = {
+            id: docId,
+            type: 'document', // Unified type for PDF/Word/PPT
+            file: docFile,
+            previewUrl: '', // Could generate a thumbnail if possible, but empty for now
+            status: 'idle', // Idle, waiting for manual trigger
+            mineruStatus: 'idle',
+            timestamp: Date.now(),
+            subItems: []
+          };
+
+          setFiles(prev => [...prev, newDocItem]);
+          if (!selectedFileId) setSelectedFileId(docId);
         }
-      } catch (err) {
-        console.error("PDF Processing Error", err);
-        alert("Failed to process PDF. Please check the file.");
-      } finally {
-        setIsScanning(false);
       }
     }
   };
 
-  const processPdfViaMineru = async (file: File) => {
-    const pdfId = generateId();
+  const handleStartMineruParse = async (fileId: string) => {
+    const item = files.find(f => f.id === fileId);
+    if (!item) return;
 
-    // Initial State: Scanning
-    const newPdfItem: FileItem = {
-      id: pdfId,
-      type: 'pdf',
-      file: file,
-      previewUrl: '', // PDF preview not generated locally to save resources, or we could use pdf.js if needed
+    // Update state to scanning
+    setFiles(prev => prev.map(f => f.id === fileId ? {
+      ...f,
       status: 'scanning',
-      mineruStatus: 'uploading',
-      timestamp: Date.now(),
-      subItems: []
-    };
-
-    setFiles(prev => [...prev, newPdfItem]);
-    setSelectedFileId(pdfId);
+      mineruStatus: 'uploading'
+    } : f));
 
     try {
       // 1. Upload to Volcengine TOS
-      // Update status to show "Uploading..."
-      setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, mineruStatus: 'uploading' } : f));
-
-      const tosUrl = await uploadFileToTos(file);
+      const tosUrl = await uploadFileToTos(item.file);
       console.log('[Upload] TOS Upload Success:', tosUrl);
 
       // 2. Transition to "Parsing" State
-      // User wanted to see "Upload Success" then "Parsing".
-      // We'll update the state to "processing" which we'll render as "Parsing..." in Sidebar
-      setFiles(prev => prev.map(f => f.id === pdfId ? {
+      setFiles(prev => prev.map(f => f.id === fileId ? {
         ...f,
         mineruStatus: 'processing', // Indicates custom API is being called
         tosUrl: tosUrl,
-        // Optional: We could have a distinct 'uploaded' state if we wanted a pause, 
-        // but 'processing' is standard.
       } : f));
 
       // 3. Trigger Custom Parsing Webhook and WAIT for result
-      // "2. 文件解析中" -> We must wait here to keep the "Processing" state active.
       try {
-        const results = await triggerCustomMineruParsing(tosUrl, file.name);
+        const results = await triggerCustomMineruParsing(tosUrl, item.file.name);
         console.log('[Mineru] Parsing results:', results);
 
-        const result = results.find(r => r.file_name === file.name) || results[0];
+        const result = results.find(r => r.file_name === item.file.name) || results[0];
 
         if (result && result.images && result.images.length > 0) {
           // 4. Process Results
           const subItems = await processMineruDirectResponse(result.images, result.layout);
 
-          setFiles(prev => prev.map(f => f.id === pdfId ? {
+          setFiles(prev => prev.map(f => f.id === fileId ? {
             ...f,
             status: 'idle', // Ready for user interaction
             mineruStatus: 'done',
@@ -119,13 +120,26 @@ const App: React.FC = () => {
             errorMessage: undefined
           } : f));
         } else {
-          throw new Error("Parsing finished but no images were returned.");
+          // Handle case with no images - treat as success but warn user
+          console.warn('[Mineru] Parsing finished but no images found.');
+          setFiles(prev => prev.map(f => f.id === fileId ? {
+            ...f,
+            status: 'idle',
+            mineruStatus: 'done',
+            mineruResultUrl: result?.full,
+            subItems: [],
+            mineruProgress: {
+              current: 0,
+              total: 0
+            },
+            errorMessage: "该文档没有识别到图片"
+          } : f));
         }
 
       } catch (mineruErr) {
         console.error('[Mineru] Parsing Failed:', mineruErr);
         const msg = (mineruErr as any).message || "Parsing service failed";
-        setFiles(prev => prev.map(f => f.id === pdfId ? {
+        setFiles(prev => prev.map(f => f.id === fileId ? {
           ...f,
           status: 'error',
           mineruStatus: 'error',
@@ -137,14 +151,8 @@ const App: React.FC = () => {
       console.error("Upload Error", e);
       // Only show error if TOS upload itself failed
       let msg = (e as any).message || "Unknown error";
-      setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, status: 'error', mineruStatus: 'error', errorMessage: msg } : f));
+      setFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: 'error', mineruStatus: 'error', errorMessage: msg } : f));
     }
-  };
-
-  // Deprecated manual start
-  const handleStartMineruParse = async (fileId: string) => {
-    console.warn("handleStartMineruParse is deprecated. Use drag & drop upload.");
-    throw new Error("Deprecated: Please re-upload the file.");
   };
 
   const handleDeleteFile = (id: string, e: React.MouseEvent) => {
@@ -156,6 +164,24 @@ const App: React.FC = () => {
       }
       return filtered;
     });
+  };
+
+  // Process single image manual trigger
+  const handleStartImageAnalysis = async (fileId: string) => {
+    const item = files.find(f => f.id === fileId);
+    if (!item) return;
+
+    setIsProcessing(true);
+    setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'processing' } : f));
+
+    try {
+      const result = await analyzeChartImage(item.file, item.context);
+      setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'completed', result } : f));
+    } catch (error) {
+      setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'error', errorMessage: 'Failed' } : f));
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Process the legacy image queue (default to chart for now)
@@ -265,6 +291,7 @@ const App: React.FC = () => {
         }}
         onProcessPdfItems={processPdfSubItems}
         onStartMineruParse={handleStartMineruParse}
+        onStartImageAnalysis={handleStartImageAnalysis}
       />
     </div>
   );

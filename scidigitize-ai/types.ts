@@ -109,7 +109,7 @@ export interface SubItem {
 
 export interface FileItem {
   id: string;
-  type: 'image' | 'pdf';
+  type: 'image' | 'pdf' | 'document';
   file: File;
   previewUrl: string;
   status: ProcessingStatus | 'scanning';

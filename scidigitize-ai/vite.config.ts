@@ -32,6 +32,11 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/foxu-api/, ''),
           timeout: 600000, // 10 minutes (for long-running webhooks)
           proxyTimeout: 600000
+        },
+        '/foxu-images-proxy': {
+          target: 'https://nocobse.foxuai.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/foxu-images-proxy/, '')
         }
       }
     },

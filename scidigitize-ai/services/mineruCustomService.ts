@@ -82,7 +82,17 @@ export const triggerCustomMineruParsing = async (fileUrl: string, fileName: stri
                 }
 
                 if (unzipData) {
-                    const images = unzipData.images || [];
+                    let images = unzipData.images || [];
+
+                    // In DEV, proxy the images to avoid CORS
+                    if (isDev) {
+                        images = images.map((imgUrl: string) => {
+                            if (imgUrl.startsWith('https://nocobse.foxuai.com')) {
+                                return imgUrl.replace('https://nocobse.foxuai.com', '/foxu-images-proxy');
+                            }
+                            return imgUrl;
+                        });
+                    }
 
                     // Map to Result Format
                     return [{

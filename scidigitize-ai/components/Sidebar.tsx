@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Upload className="w-8 h-8 text-indigo-600 animate-bounce" />
           </div>
           <h3 className="text-lg font-bold text-indigo-700">Drop Files Here</h3>
-          <p className="text-sm text-indigo-500">PDFs or Images</p>
+          <p className="text-sm text-indigo-500">Documents or Images</p>
         </div>
       )}
 
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <input
           type="file"
           multiple
-          accept="image/*,application/pdf"
+          accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx"
           ref={fileInputRef}
           className="hidden"
           onChange={handleFileChange}
@@ -165,7 +165,7 @@ const itemsList = (files: any[], onSelectFile: any, selectedFileId: any, isScann
             : 'bg-white border-slate-100 hover:border-indigo-100'}`}
       >
         <div className={`w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden border relative flex items-center justify-center
-               ${file.type === 'pdf' ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-100 border-slate-200'}
+               ${file.type === 'pdf' || file.type === 'document' ? 'bg-indigo-50 border-indigo-100' : 'bg-slate-100 border-slate-200'}
             `}>
           {file.type === 'image' ? (
             <>
@@ -188,7 +188,7 @@ const itemsList = (files: any[], onSelectFile: any, selectedFileId: any, isScann
               ) : (
                 <>
                   <Folder className="w-6 h-6 text-indigo-500 fill-indigo-100" />
-                  <span className="text-[9px] font-bold text-indigo-500 mt-0.5">PDF</span>
+                  <span className="text-[9px] font-bold text-indigo-500 mt-0.5">DOC</span>
                 </>
               )}
             </div>
@@ -200,7 +200,7 @@ const itemsList = (files: any[], onSelectFile: any, selectedFileId: any, isScann
             {file.file.name}
           </h3>
 
-          {file.type === 'pdf' ? (
+          {file.type === 'pdf' || file.type === 'document' ? (
             <div className="flex flex-col gap-0.5 mt-1">
               {file.mineruStatus === 'uploading' ? (
                 <span className="text-xs text-blue-500 animate-pulse flex items-center gap-1">
