@@ -52,7 +52,7 @@ const GlobalSidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
             <MenuItem id="archives" icon="📂" label="Archives" />
 
             <MenuItem label="Knowledge Assets" isHeader />
-            <MenuItem id="sops" icon="📘" label="SOPs & Templates" />
+            <MenuItem id="library" icon="📘" label="SOPs & Templates" />
             <MenuItem id="engine" icon="🧠" label="Logic Engines" />
             <MenuItem id="prompts" icon="📝" label="Few-shot Bank" />
 

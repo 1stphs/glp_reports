@@ -5,6 +5,8 @@ import CellDetailView from './views/CellDetail/CellDetailView';
 import ControlCenterView from './views/ControlCenter/ControlCenterView';
 import HomepageView from './views/Homepage/HomepageView';
 import StudyDashboard from './views/Homepage/Dashboard/StudyDashboard';
+import TemplateListView from './views/StandardLibrary/TemplateListView';
+import TemplateDetailView from './views/StandardLibrary/TemplateDetailView';
 import GlobalSidebar from './components/common/GlobalSidebar';
 import './styles/variables.css';
 
@@ -43,7 +45,7 @@ const MainLayout = ({ children, onHome, currentView, onNavigate }: {
 );
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = React.useState<'home' | 'dashboard' | 'control' | 'detail'>('home');
+  const [currentView, setCurrentView] = React.useState<'home' | 'dashboard' | 'control' | 'detail' | 'library' | 'library_detail'>('home');
 
   return (
     <StudyProvider>
@@ -55,6 +57,8 @@ const App: React.FC = () => {
 
         {currentView === 'home' && <HomepageView onNavigate={(view) => setCurrentView(view)} />}
         {currentView === 'dashboard' && <StudyDashboard onNavigate={(view) => setCurrentView(view)} />}
+        {currentView === 'library' && <TemplateListView onNavigate={(view) => setCurrentView(view as any)} />}
+        {currentView === 'library_detail' && <TemplateDetailView onNavigate={(view) => setCurrentView(view as any)} />}
         {currentView === 'control' && <ControlCenterView />}
         {currentView === 'detail' && <CellDetailView />}
       </MainLayout>
