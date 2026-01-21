@@ -2,15 +2,16 @@
 import React, { useState } from 'react';
 import StudyWizard from './Wizard/StudyWizard';
 
+
 interface HomepageProps {
-    onNavigate: (view: 'control') => void;
+    onNavigate: (view: 'control' | 'detail' | 'dashboard') => void;
 }
 
 const HomepageView: React.FC<HomepageProps> = ({ onNavigate }) => {
     const [showWizard, setShowWizard] = useState(false);
 
     return (
-        <div style={{ padding: 'var(--space-12)' }}>
+        <div style={{ padding: 'var(--space-12)', position: 'relative', minHeight: '80vh' }}>
             {/* Hero Section */}
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-12)' }}>
                 <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: 'var(--space-4)', display: 'inline-block', position: 'relative' }}>
@@ -56,7 +57,7 @@ const HomepageView: React.FC<HomepageProps> = ({ onNavigate }) => {
 
                 {/* Recent Study Card */}
                 <div
-                    onClick={() => onNavigate('control')}
+                    onClick={() => onNavigate('dashboard')}
                     style={{
                         padding: 'var(--space-8)',
                         border: '1px solid var(--color-border)',
@@ -75,7 +76,7 @@ const HomepageView: React.FC<HomepageProps> = ({ onNavigate }) => {
                         <span style={{ backgroundColor: 'var(--color-status-warn-bg)', color: 'var(--color-status-warn)', padding: '2px 8px', borderRadius: '12px', fontSize: 'var(--text-xs)', fontWeight: 'bold' }}>Last Active</span>
                     </div>
                     <p style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-2)' }}>
-                        Resume analysis (Phase 2 Pending)
+                        Go to Dashboard
                     </p>
                 </div>
             </div>
@@ -87,10 +88,35 @@ const HomepageView: React.FC<HomepageProps> = ({ onNavigate }) => {
                     onComplete={(id) => {
                         setShowWizard(false);
                         console.log("Study Created:", id);
-                        onNavigate('control');
+                        onNavigate('dashboard');
                     }}
                 />
             )}
+
+            <footer style={{ marginTop: 'var(--space-12)', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 'var(--text-xs)' }}>
+                &copy; 2026 Foxu.AI - GLP In Silico. All Rights Reserved.
+            </footer>
+
+            {/* Demo Mode Floating Button */}
+            <button
+                onClick={() => onNavigate('detail')}
+                style={{
+                    position: 'fixed', bottom: 'var(--space-8)', right: 'var(--space-8)',
+                    padding: 'var(--space-4) var(--space-6)',
+                    backgroundColor: '#8b5cf6', color: 'white',
+                    borderRadius: 'var(--radius-full)', border: 'none',
+                    boxShadow: 'var(--shadow-float)', cursor: 'pointer',
+                    fontWeight: 'bold', fontSize: 'var(--text-md)',
+                    display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+                    zIndex: 'var(--z-modal)',
+                    transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                <span>🧪</span>
+                Enter Simulation Lab (Demo)
+            </button>
         </div>
     );
 };

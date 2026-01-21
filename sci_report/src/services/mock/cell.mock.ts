@@ -62,7 +62,7 @@ export const MOCK_CELL_DATA: CellData = {
             analysis_date: "2026-01-15",
             status: "Accepted",
             qc_results: {
-                "LLOQ": { nominal_conc: 1.00, mean_observed: 1.02, precision_cv: 4.2, accuracy_re: 2.0, n: 6 },
+                "LLOQ": { nominal_conc: 1.00, mean_observed: 1.02, precision_cv: 16.5, accuracy_re: 2.0, n: 6 }, // FAIL: CV > 15%
                 "LQC": { nominal_conc: 3.00, mean_observed: 2.95, precision_cv: 3.1, accuracy_re: -1.7, n: 6 },
                 "MQC": { nominal_conc: 400.0, mean_observed: 412.0, precision_cv: 2.5, accuracy_re: 3.0, n: 6 },
                 "HQC": { nominal_conc: 800.0, mean_observed: 785.0, precision_cv: 1.8, accuracy_re: -1.9, n: 6 }
@@ -73,9 +73,27 @@ export const MOCK_CELL_DATA: CellData = {
                     nominal_conc: 3.00,
                     observed_conc: 0.5,
                     reason_code: "ERR_TECHNICAL_01",
-                    reason_desc: "Sample spill during processing (技术性操作失误：样本溅出)",
+                    reason_desc: "Sample spill during processing",
                     approved_by: "SD_John_Doe",
                     timestamp: "2026-01-15T14:22:11Z"
+                },
+                {
+                    sample_id: "HQC-05",
+                    nominal_conc: 800.00,
+                    observed_conc: 1200.0,
+                    reason_code: "ERR_inst_02",
+                    reason_desc: "Instrument signal saturation",
+                    approved_by: "SD_Jane_Smith",
+                    timestamp: "2026-01-15T14:45:00Z"
+                },
+                {
+                    sample_id: "LLOQ-01",
+                    nominal_conc: 1.00,
+                    observed_conc: 0.0,
+                    reason_code: "ERR_human_03",
+                    reason_desc: "Vial missing",
+                    approved_by: "System_Auto",
+                    timestamp: "2026-01-15T14:10:00Z"
                 }
             ]
         },
@@ -93,9 +111,9 @@ export const MOCK_CELL_DATA: CellData = {
         }
     ],
     inter_batch_summary: {
-        precision_range_cv: [1.8, 4.2],
+        precision_range_cv: [1.8, 16.5], // Updated range
         accuracy_range_re: [-1.9, 3.0],
-        is_compliant: true,
+        is_compliant: false, // Updated status
         regulatory_standard: "NMPA/FDA BMV Guidelines 2026"
     },
     audit_trail: {
