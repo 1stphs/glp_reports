@@ -18,7 +18,10 @@ const MainLayout = ({ children, onHome }: { children: React.ReactNode, onHome: (
       display: 'flex', alignItems: 'center', padding: '0 var(--space-6)',
       backgroundColor: 'var(--color-bg-surface)'
     }}>
-      <div onClick={onHome} style={{ fontWeight: 'bold', fontSize: 'var(--text-lg)', cursor: 'pointer', color: 'var(--color-brand-primary)' }}>GLP-IS</div>
+      <div onClick={onHome} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <span style={{ fontWeight: 'bold', fontSize: 'var(--text-lg)', color: 'var(--color-brand-primary)' }}>GLP In Silico</span>
+        <span style={{ fontSize: 'var(--text-xs)', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#4338ca', fontWeight: 'bold' }}>Foxu.AI</span>
+      </div>
     </nav>
     {children}
   </div>

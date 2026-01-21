@@ -13,8 +13,14 @@ const HomepageView: React.FC<HomepageProps> = ({ onNavigate }) => {
         <div style={{ padding: 'var(--space-12)' }}>
             {/* Hero Section */}
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-12)' }}>
-                <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: 'var(--space-4)', background: 'linear-gradient(to right, var(--color-primary), var(--color-status-pass))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    GLP Intelligence Suite
+                <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: 'var(--space-4)', display: 'inline-block', position: 'relative' }}>
+                    <span style={{ background: 'linear-gradient(to right, var(--color-primary), var(--color-status-pass))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>GLP In Silico</span>
+                    <span style={{
+                        position: 'absolute', top: '-15px', right: '-90px',
+                        fontSize: '1rem', padding: '4px 12px', borderRadius: '20px',
+                        backgroundColor: '#e0e7ff', color: '#4338ca',
+                        border: '1px solid #c7d2fe', whiteSpace: 'nowrap'
+                    }}>Foxu.AI</span>
                 </h1>
                 <p style={{ fontSize: 'var(--text-xl)', color: 'var(--color-text-secondary)', maxWidth: '600px', margin: '0 auto' }}>
                     Accelerate your bioanalytical workflows with White-Box AI.
