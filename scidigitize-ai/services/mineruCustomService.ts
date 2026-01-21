@@ -58,36 +58,54 @@ export const triggerCustomMineruParsing = async (fileUrl: string, fileName: stri
                 continue;
             }
 
-            const pollData = await pollResponse.json();
-            // console.log('[Mineru] Poll Status:', pollData.success ? 'Success' : 'Processing...');
+            const pollJson = await pollResponse.json();
 
-            // Check completion criteria
-            if (pollData.success === true && pollData.data && pollData.data.unzip) {
-                console.log('[Mineru] Parsing Completed!', pollData);
+            // Handle { statusCode, body } wrapper structure
+            const responseBody = pollJson.body || pollJson;
 
-                const unzip = pollData.data.unzip;
-                const images = unzip.images || [];
+            // console.log(`[Mineru] Poll Status: ${responseBody.message}`);
 
-                // Map to Result Format
-                return [{
-                    file_name: fileName,
-                    state: 'done',
-                    extract_progress: {
-                        extracted_pages: images.length,
-                        total_pages: images.length,
-                        start_time: new Date(startTime).toISOString()
-                    },
-                    images: images,
-                    full: unzip.full,
-                    layout: unzip.layout,
-                    origin: unzip.origin,
-                    content_list: unzip.content_list
-                }];
+            // Check completion criteria based on 'message'
+            if (responseBody.message === 'completed') {
+                console.log('[Mineru] Parsing Completed!', responseBody);
+
+                // Find the dynamic key containing 'unzip' data
+                let unzipData = null;
+                const dataObj = responseBody.data || {};
+
+                // Iterate over object values to find the one with 'unzip' property
+                for (const val of Object.values(dataObj)) {
+                    if (val && typeof val === 'object' && (val as any).unzip) {
+                        unzipData = (val as any).unzip;
+                        break;
+                    }
+                }
+
+                if (unzipData) {
+                    const images = unzipData.images || [];
+
+                    // Map to Result Format
+                    return [{
+                        file_name: fileName,
+                        state: 'done',
+                        extract_progress: {
+                            extracted_pages: images.length,
+                            total_pages: images.length,
+                            start_time: new Date(startTime).toISOString()
+                        },
+                        images: images,
+                        full: unzipData.full,
+                        layout: unzipData.layout,
+                        origin: unzipData.origin,
+                        content_list: unzipData.content_list
+                    }];
+                } else {
+                    console.warn('[Mineru] Status completed but no unzip data found in:', responseBody.data);
+                }
             }
 
-            // If message indicates failure?
-            // "data": null or "message": "error..." ?
-            // For now assume if not success, it's processing.
+            // If message is 'uploading' or anything else, we continue polling untill timeout.
+            // Note: success is always true according to docs, so we rely on message.
 
         } catch (pollErr) {
             console.warn('[Mineru] Polling Error:', pollErr);
