@@ -1,119 +1,96 @@
 import { MineruExtractResult } from '../types';
 
 const isDev = (import.meta as any).env?.DEV;
-const CALLBACK_URL = (import.meta as any).env.VITE_CALLBACK_URL;
-// In Prod, usually requires Nginx config or works directly if browser allows. 
-// We use relative path in Prod hoping for a proxy/backend on same domain.
-const RELAY_POLL_URL = isDev ? 'http://localhost:3001/api/poll-results' : '/api/poll-results';
 
-// In Dev, route through Vite proxy (/foxu-api) to support 5+ minute timeouts via 'proxyTimeout'
-// In Prod, usually requires Nginx config or works directly if browser allows
-const TRIGGER_URL = isDev
-    ? '/foxu-api/webhook:trigger/yqwfx0r97q9'
-    : 'https://foxuai.com/api/webhook:trigger/yqwfx0r97q9';
-
-// This interface matches API Docs result format (docs/mineru_api_results.md)
-interface CustomMineruResponse {
-    [key: string]: {
-        images: string[];
-        content_list: string;
-        full: string;
-        layout: string;
-        origin: string;
-    } | boolean;
-}
+// Use Proxy in Dev, Direct in Prod
+const BASE_URL = isDev ? '/foxu-api' : 'https://foxuai.com/api';
+const TRIGGER_ENDPOINT = `${BASE_URL}/webhook:trigger/e6n65lqcahs`;
+const POLL_ENDPOINT = `${BASE_URL}/webhook:trigger/acow278h6om`;
 
 export const triggerCustomMineruParsing = async (fileUrl: string, fileName: string): Promise<MineruExtractResult[]> => {
-    console.log('[Mineru] Triggering parsing for:', fileUrl);
-
-    if (!CALLBACK_URL) {
-        throw new Error("Configuration Error: VITE_CALLBACK_URL is missing. Please set up Ngrok and .env.local");
-    }
-
-    const payload = {
-        url: fileUrl,
-        title: fileName,
-        model_version: 'vlm',
-        callback_url: CALLBACK_URL
-    };
-    console.log('[Mineru] Sending Payload with Callback:', JSON.stringify(payload, null, 2));
+    console.log('[Mineru] Triggering parsing via Direct Polling for:', fileUrl);
 
     // 1. Trigger the Job
-    const response = await fetch(TRIGGER_URL, {
+    const triggerResponse = await fetch(TRIGGER_ENDPOINT, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            url: fileUrl,
+            title: fileName,
+            model_version: 'vlm'
+        })
     });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[Mineru] API Error:', response.status, errorText);
-        throw new Error(`Mineru Webhook Trigger Failed: ${response.status} ${response.statusText}`);
+    if (!triggerResponse.ok) {
+        throw new Error(`Mineru Trigger Failed: ${triggerResponse.status}`);
     }
 
-    console.log('[Mineru] Job Triggered. Starting Polling Loop (Waiting for Callback)...');
+    const triggerData = await triggerResponse.json();
+    console.log('[Mineru] Trigger Response:', triggerData);
 
-    // 2. Poll the Relay Server for Results
+    // Robustly find file_id (could be at root or in data object)
+    const fileId = triggerData.file_id || (triggerData.data && triggerData.data.file_id) || (triggerData as any)?.data;
+
+    if (!fileId) {
+        console.error("Invalid Trigger Response", triggerData);
+        throw new Error("Mineru API did not return a valid file_id");
+    }
+
+    console.log(`[Mineru] Task Started. File ID: ${fileId}. Starting Polling...`);
+
+    // 2. Poll for Results
     const startTime = Date.now();
     const TIMEOUT_MS = 600000; // 10 Minutes
-    const POLLING_INTERVAL = 10000; // 10 Seconds
+    const POLLING_INTERVAL = 5000; // 5 Seconds
 
     while (Date.now() - startTime < TIMEOUT_MS) {
-        try {
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
 
-            const pollResponse = await fetch(RELAY_POLL_URL);
+        try {
+            const pollResponse = await fetch(POLL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_id: fileId })
+            });
+
             if (!pollResponse.ok) {
-                console.warn('[Relay] Poll skipped (server likely down)');
+                console.warn('[Mineru] Poll request failed, retrying...');
                 continue;
             }
 
-            const db: CustomMineruResponse = await pollResponse.json();
+            const pollData = await pollResponse.json();
+            // console.log('[Mineru] Poll Status:', pollData.success ? 'Success' : 'Processing...');
 
-            // Check for any valid result
-            // Ideally we match by 'origin' === fileUrl, but signed URL might have expired params variance?
-            // Let's look for ANY result that contains 'images' for now (Single User Dev Mode assumption)
-            // Or match the filename if we could.
-            // We'll iterate all keys.
+            // Check completion criteria
+            if (pollData.success === true && pollData.data && pollData.data.unzip) {
+                console.log('[Mineru] Parsing Completed!', pollData);
 
-            const results: MineruExtractResult[] = [];
-            let found = false;
+                const unzip = pollData.data.unzip;
+                const images = unzip.images || [];
 
-            for (const key in db) {
-                const item = db[key];
-                // Check if it's a result object
-                if (typeof item === 'object' && item !== null && 'images' in (item as any)) {
-                    const resultItem = item as any;
-                    // Optional: Check if origin matches. 
-                    // const origin = resultItem.origin; 
-                    // if (origin && origin !== fileUrl) continue; 
-
-                    console.log(`[Mineru] Found result for key: ${key}`);
-                    results.push({
-                        file_name: fileName,
-                        state: 'done',
-                        extract_progress: {
-                            extracted_pages: (resultItem.images || []).length,
-                            total_pages: (resultItem.images || []).length,
-                            start_time: new Date().toISOString()
-                        },
-                        ...resultItem
-                    });
-                    found = true;
-                }
+                // Map to Result Format
+                return [{
+                    file_name: fileName,
+                    state: 'done',
+                    extract_progress: {
+                        extracted_pages: images.length,
+                        total_pages: images.length,
+                        start_time: new Date(startTime).toISOString()
+                    },
+                    images: images,
+                    full: unzip.full,
+                    layout: unzip.layout,
+                    origin: unzip.origin,
+                    content_list: unzip.content_list
+                }];
             }
 
-            if (found) {
-                console.log('[Mineru] Polling Success! Results received.');
-                return results;
-            }
-
-            console.log('[Mineru] Still waiting... (Time elapsed: ' + Math.round((Date.now() - startTime) / 1000) + 's)');
+            // If message indicates failure?
+            // "data": null or "message": "error..." ?
+            // For now assume if not success, it's processing.
 
         } catch (pollErr) {
-            console.warn('[Relay] Polling Error (ignoring):', pollErr);
+            console.warn('[Mineru] Polling Error:', pollErr);
         }
     }
 

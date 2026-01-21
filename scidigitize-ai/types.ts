@@ -167,6 +167,7 @@ export interface MineruExtractResult {
   full?: string; // Markdown URL
   layout?: string; // JSON URL
   origin?: string; // Original URL
+  content_list?: string;
 }
 
 export interface MineruResultResponse {
