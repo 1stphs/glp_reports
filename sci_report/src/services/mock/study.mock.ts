@@ -38,3 +38,19 @@ export const MOCK_STUDY_SECTIONS: StudySection[] = [
         ]
     }
 ];
+
+export interface StudyFile {
+    id: string;
+    name: string;
+    type: 'protocol' | 'data' | 'report' | 'other';
+    status: 'parsed' | 'parsing' | 'error';
+    uploadDate: string;
+}
+
+export const MOCK_STUDY_FILES: StudyFile[] = [
+    { id: 'f1', name: 'NS25318BV01生物分析验证方案(SD rat)_Final@20250901.docx', type: 'protocol', status: 'parsed', uploadDate: '2025-09-01' },
+    { id: 'f2', name: 'NS25318BV01-RAT-BA-REPORT-Final-杨接敏-1@20251226.docx', type: 'report', status: 'parsed', uploadDate: '2025-12-26' },
+    { id: 'f3', name: 'Qced NS25318BV01二次数据汇总@20250916（1-6）.xlsx', type: 'data', status: 'parsed', uploadDate: '2025-09-17' },
+    { id: 'f4', name: 'Qced NN25318BV01二次数据汇总-LTS(Run7~8)@20251211.xlsx', type: 'data', status: 'parsed', uploadDate: '2025-12-11' },
+    { id: 'f5', name: 'Qced NS25318BV01二次数据汇总-LTS(Run9)@20251217.xlsx', type: 'data', status: 'parsing', uploadDate: '2025-12-17' },
+];
