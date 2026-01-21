@@ -202,10 +202,21 @@ const itemsList = (files: any[], onSelectFile: any, selectedFileId: any, isScann
 
           {file.type === 'pdf' ? (
             <div className="flex flex-col gap-0.5 mt-1">
-              {file.status === 'scanning' ? (
-                <span className="text-xs text-indigo-500 italic">Scanning pages...</span>
+              {file.mineruStatus === 'uploading' ? (
+                <span className="text-xs text-blue-500 animate-pulse flex items-center gap-1">
+                  <Upload className="w-3 h-3" /> Uploading...
+                </span>
+              ) : file.mineruStatus === 'processing' || file.status === 'scanning' ? (
+                <span className="text-xs text-purple-500 animate-pulse flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Deep Analysis (~2-5m)...
+                </span>
+              ) : file.mineruStatus === 'error' ? (
+                <span className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {file.errorMessage || "Parsing Failed"}
+                </span>
               ) : (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-green-500" />
                   {file.subItems?.length || 0} charts found
                 </span>
               )}

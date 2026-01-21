@@ -5,7 +5,7 @@ import DataTable from './DataTable';
 import GenericDataTable from './GenericDataTable';
 import InfographicVisualizer from './InfographicVisualizer';
 import PdfDashboard from './PdfDashboard';
-import { Download, Sparkles, Maximize2, FileDigit, ArrowLeft, Network, Table, BarChart3 } from 'lucide-react';
+import { Download, Sparkles, Maximize2, FileDigit, ArrowLeft, Network, Table, BarChart3, FileText } from 'lucide-react';
 
 interface MainViewProps {
   selectedFile: FileItem | undefined;
@@ -171,8 +171,21 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
           </div>
         </div>
 
-        {activeResult && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {selectedFile?.mineruResultUrl && (
+            <a
+              href={selectedFile.mineruResultUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md transition-colors mr-2"
+              title="View Full Layout Analysis"
+            >
+              <FileText className="w-4 h-4" />
+              View Full Report
+            </a>
+          )}
+
+          {activeResult && (
             <button
               onClick={handleDownloadCSV}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-colors"
@@ -180,8 +193,8 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
               <Download className="w-4 h-4" />
               Download {dataType === 'infographic' ? 'Text' : 'CSV'}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">

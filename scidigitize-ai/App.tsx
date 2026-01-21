@@ -76,49 +76,61 @@ const App: React.FC = () => {
 
     try {
       // 1. Upload to Volcengine TOS
+      // Update status to show "Uploading..."
+      setFiles(prev => prev.map(f => f.id === pdfId ? { ...f, mineruStatus: 'uploading' } : f));
+
       const tosUrl = await uploadFileToTos(file);
       console.log('[Upload] TOS Upload Success:', tosUrl);
 
-      // TOS upload success = task complete! 
-      // Mark as done immediately after TOS upload
+      // 2. Transition to "Parsing" State
+      // User wanted to see "Upload Success" then "Parsing".
+      // We'll update the state to "processing" which we'll render as "Parsing..." in Sidebar
       setFiles(prev => prev.map(f => f.id === pdfId ? {
         ...f,
-        status: 'idle', // Ready
-        mineruStatus: 'done',
-        tosUrl: tosUrl, // Store the TOS URL
+        mineruStatus: 'processing', // Indicates custom API is being called
+        tosUrl: tosUrl,
+        // Optional: We could have a distinct 'uploaded' state if we wanted a pause, 
+        // but 'processing' is standard.
       } : f));
 
-      // 2. Trigger Custom Parsing Webhook (optional, in background)
-      // This is fire-and-forget, don't wait for results
+      // 3. Trigger Custom Parsing Webhook and WAIT for result
+      // "2. 文件解析中" -> We must wait here to keep the "Processing" state active.
       try {
-        triggerCustomMineruParsing(tosUrl, file.name)
-          .then(results => {
-            console.log('[Mineru] Background parsing results:', results);
-            const result = results.find(r => r.file_name === file.name) || results[0];
+        const results = await triggerCustomMineruParsing(tosUrl, file.name);
+        console.log('[Mineru] Parsing results:', results);
 
-            if (result && result.images && result.images.length > 0) {
-              // Update with Mineru results in background
-              processMineruDirectResponse(result.images, result.layout)
-                .then(subItems => {
-                  setFiles(prev => prev.map(f => f.id === pdfId ? {
-                    ...f,
-                    mineruResultUrl: result.full,
-                    subItems: subItems,
-                    mineruProgress: {
-                      current: result.images!.length,
-                      total: result.images!.length
-                    }
-                  } : f));
-                })
-                .catch(err => console.warn('[Mineru] Failed to process images:', err));
-            }
-          })
-          .catch(err => {
-            console.warn('[Mineru] Background parsing failed (non-critical):', err);
-            // Don't update status to error - TOS upload was successful
-          });
+        const result = results.find(r => r.file_name === file.name) || results[0];
+
+        if (result && result.images && result.images.length > 0) {
+          // 4. Process Results
+          const subItems = await processMineruDirectResponse(result.images, result.layout);
+
+          setFiles(prev => prev.map(f => f.id === pdfId ? {
+            ...f,
+            status: 'idle', // Ready for user interaction
+            mineruStatus: 'done',
+            mineruResultUrl: result.full, // Link to Markdown
+            subItems: subItems,
+            mineruProgress: {
+              current: result.images.length,
+              total: result.images.length
+            },
+            // Clear error if any
+            errorMessage: undefined
+          } : f));
+        } else {
+          throw new Error("Parsing finished but no images were returned.");
+        }
+
       } catch (mineruErr) {
-        console.warn('[Mineru] Failed to trigger parsing (non-critical):', mineruErr);
+        console.error('[Mineru] Parsing Failed:', mineruErr);
+        const msg = (mineruErr as any).message || "Parsing service failed";
+        setFiles(prev => prev.map(f => f.id === pdfId ? {
+          ...f,
+          status: 'error',
+          mineruStatus: 'error',
+          errorMessage: `Parsing Failed: ${msg}`
+        } : f));
       }
 
     } catch (e) {

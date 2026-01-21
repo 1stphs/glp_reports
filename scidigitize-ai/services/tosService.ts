@@ -68,15 +68,21 @@ export const uploadFileToTos = async (file: File): Promise<string> => {
             throw new Error(`TOS Upload Failed: ${response.status} ${response.statusText}`);
         }
 
-        // 3. Return Public URL for Backend
-        // The backend likely needs a clean URL.
-        const protocol = sdkEndpoint.startsWith('http') ? '' : 'https://';
-        // Construct standard URL (Virtual-Hosted Style)
-        const publicUrl = `${protocol}${BUCKET_NAME}.${sdkEndpoint}/${fileName}`;
+        // 3. Generate Signed GET URL for Backend
+        // The backend needs to download the file. Signed URL ensures access even if private.
+        // The example in api.md shows a signed URL, so we follow that pattern.
+        const signedGetUrl = client.getPreSignedUrl({
+            bucket: BUCKET_NAME,
+            key: fileName,
+            method: 'GET',
+            expires: 3600 // 1 hour validity for backend to fetch
+        });
 
-        return publicUrl;
+        console.log('[TOS] Signed GET URL:', signedGetUrl);
+        return signedGetUrl;
+
     } catch (error) {
-        console.error('TOS Upload Error:', error);
-        throw error;
+        console.error("TOS Upload Error:", error);
+        throw new Error(`TOS Upload Failed: ${(error as any).message || error}`);
     }
 };

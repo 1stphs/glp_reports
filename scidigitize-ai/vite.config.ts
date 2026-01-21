@@ -25,6 +25,13 @@ export default defineConfig(({ mode }) => {
           target: 'https://bio-knowledgebase.tos-cn-beijing.volces.com',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/tos-proxy/, '')
+        },
+        '/foxu-api': {
+          target: 'https://foxuai.com/api',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/foxu-api/, ''),
+          timeout: 600000, // 10 minutes (for long-running webhooks)
+          proxyTimeout: 600000
         }
       }
     },
