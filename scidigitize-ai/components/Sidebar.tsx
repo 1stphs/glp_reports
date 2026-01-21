@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { FileItem } from '../types';
-import { Upload, Play, CheckCircle2, Loader2, FileBarChart, AlertCircle, X, Image as ImageIcon, FileText, Folder } from 'lucide-react';
+import { Upload, Play, CheckCircle2, Loader2, FileBarChart, AlertCircle, X, Image as ImageIcon, FileText, Folder, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   files: FileItem[];
@@ -89,35 +89,39 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Actions */}
       <div className="p-4 grid grid-cols-2 gap-3">
-        {/* ... (buttons remain same) */}
         <button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            if (fileInputRef.current) {
+              fileInputRef.current.accept = "image/*";
+              fileInputRef.current.click();
+            }
+          }}
           disabled={isScanning}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center px-2 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-md hover:border-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {isScanning ? 'Scanning...' : 'Upload'}
+          Digitize Images
         </button>
+
+        <button
+          onClick={() => {
+            if (fileInputRef.current) {
+              fileInputRef.current.accept = "application/pdf,.doc,.docx,.ppt,.pptx";
+              fileInputRef.current.click();
+            }
+          }}
+          disabled={isScanning}
+          className="flex items-center justify-center px-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm shadow-indigo-200 hover:shadow-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Parse Documents
+        </button>
+
         <input
           type="file"
           multiple
-          accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx"
           ref={fileInputRef}
           className="hidden"
           onChange={handleFileChange}
         />
-
-        <button
-          onClick={onProcessQueue}
-          disabled={isProcessing || queueCount === 0 || isScanning}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm
-            ${isProcessing || queueCount === 0 || isScanning
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'}`}
-        >
-          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-          Run Queue
-        </button>
       </div>
 
       {/* Tabs */}
