@@ -76,7 +76,7 @@ const PdfDashboard: React.FC<PdfDashboardProps> = ({ fileItem, onProcessSelected
 
   if (fileItem.status === 'scanning') {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-500">
+      <div className="flex-1 w-full flex flex-col items-center justify-center h-full text-slate-500">
         <div className="relative mb-4">
           {fileItem.mineruStatus === 'uploading' ? (
             <CloudUpload className="w-12 h-12 text-blue-500 animate-bounce" />

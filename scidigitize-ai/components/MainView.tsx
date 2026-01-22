@@ -5,6 +5,7 @@ import DataTable from './DataTable';
 import GenericDataTable from './GenericDataTable';
 import InfographicVisualizer from './InfographicVisualizer';
 import PdfDashboard from './PdfDashboard';
+import RChartRenderer from './RChartRenderer';
 import { Download, Sparkles, Maximize2, FileDigit, ArrowLeft, Network, Table, BarChart3, FileText, Play, Loader2 } from 'lucide-react';
 
 interface MainViewProps {
@@ -159,6 +160,10 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
 
     if (dataType === 'table') {
       return <GenericDataTable data={activeResult as any} />;
+    }
+
+    if (dataType === 'r_stat') {
+      return <RChartRenderer data={activeResult as any} />;
     }
 
     // Charts have two tabs
