@@ -48,10 +48,27 @@ We are expanding our vision to achieve **1:1 pixel-perfect reconstruction** of c
 3. Run the app:
    `npm run dev`
 
-## 启动R语言服务
+## 📊 R 语言服务配置 (R-Backend Setup)
 
-进入项目文件夹
+为了启用高保真统计图表重构功能（R-Stat High-Fidelity Reconstruction），您需要在本地运行 R 后端服务。
+
+### 1. 安装 R 环境 (MacOS)
+```bash
+brew install --cask r
+```
+
+### 2. 安装依赖包
+在终端执行以下命令，自动安装 `plumber`, `ggplot2`, `survminer` 等核心库：
+```bash
+R -e "install.packages(c('plumber', 'ggplot2', 'survminer', 'survival', 'jsonlite'), repos='http://cran.rstudio.com/')"
+```
+
+### 3. 启动 R 服务
+进入项目根目录后运行：
+```bash
 R -e 'plumber::plumb("r_templates/server.R")$run(port=8000)'
+```
+*服务启动后将监听 8000 端口，前端即可自动调用绘制功能。*
 
 ## 🛠 Tech Stack
 

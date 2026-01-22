@@ -26,6 +26,22 @@ draw_survival_plot <- function(config_list) {
   # Data payload must have 'time', 'status', 'strata' (optional)
   raw_df <- parse_data_payload(config_list$data_payload)
   
+  print("Debug raw_df names:")
+  print(names(raw_df))
+  print(head(raw_df))
+  
+  # Normalize names to lowercase for robustness
+  names(raw_df) <- tolower(names(raw_df))
+  
+  # Check required columns
+  if (!"time" %in% names(raw_df)) stop("Missing required column: 'time' (found: ", paste(names(raw_df), collapse=", "), ")")
+  # Status might be optional if we assume all event, but for survival plot usually needed. 
+  # If missing, maybe default to 1? Let's error for now to be safe.
+  if (!"status" %in% names(raw_df)) {
+     print("Warning: 'status' column missing. Defaulting to 1 (Event) for all.")
+     raw_df$status <- 1
+  }
+  
   # Ensure columns are numeric/factor
   raw_df$time <- as.numeric(raw_df$time)
   raw_df$status <- as.numeric(raw_df$status) # 0=censored, 1=event usually

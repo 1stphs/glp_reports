@@ -25,7 +25,11 @@ const RChartRenderer: React.FC<RChartRendererProps> = ({ data }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                // Map frontend 'chartType' to backend 'chart_type' expectation
+                body: JSON.stringify({
+                    ...data,
+                    chart_type: data.chartType
+                }),
             });
 
             if (!response.ok) {
