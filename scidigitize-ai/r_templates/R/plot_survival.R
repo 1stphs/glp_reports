@@ -60,14 +60,23 @@ draw_survival_plot <- function(config_list) {
   palette <- get_palette(journal_theme)
   
   # Overwrite palette if specific custom colors provided
-  if (!is.null(style$palette) && length(style$palette) > 0) {
-    palette <- style$palette
+  # Overwrite palette if specific custom colors provided
+  if (!is.null(style$custom_palette) && length(style$custom_palette) > 0) {
+    palette <- style$custom_palette
   }
   
   show_risk_table <- if(!is.null(style$risk_table$show)) style$risk_table$show else TRUE
   show_pval <- if(!is.null(style$p_value_annotation$show)) style$p_value_annotation$show else TRUE
   censor_shape <- if(!is.null(style$censoring_mark)) style$censoring_mark else "+"
+  break_time_by <- if(!is.null(style$break_time_by)) style$break_time_by else NULL
   
+  # Font mapping for R
+  r_font <- "sans"
+  if (!is.null(style$font_family)) {
+    if (style$font_family == "Times New Roman") r_font <- "serif"
+    if (style$font_family == "Courier") r_font <- "mono"
+  }
+
   # 5. Plotting (The Heavy Lifting)
   # ggsurvplot is the gold standard for this.
   
@@ -77,7 +86,7 @@ draw_survival_plot <- function(config_list) {
     
     # Appearance
     palette = palette,
-    ggtheme = get_journal_theme(journal_theme),
+    ggtheme = get_journal_theme(journal_theme) + theme(text = element_text(family = r_font)),
     censor.shape = censor_shape,
     size = 1, # Line size, could be configurable
     
@@ -105,7 +114,8 @@ draw_survival_plot <- function(config_list) {
     
     # Axis
     xlab = "Time",
-    ylab = "Survival Probability"
+    ylab = "Survival Probability",
+    break.time.by = break_time_by
   )
   
   return(p)

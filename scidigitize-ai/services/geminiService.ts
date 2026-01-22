@@ -118,6 +118,8 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
        - journal_theme (NEJM/LANCET/NATURE style?)
        - custom_palette: EXTRACT EXACT HEX CODES from the image for each series (e.g. ["#E69F00", "#56B4E9"]).
        - aspect_ratio: Estimate the width/height ratio (e.g. 1.5 for landscape, 0.8 for portrait).
+       - font_family: 'Arial' (sans) or 'Times New Roman' (serif)?
+       - break_time_by: The interval between X-axis ticks (e.g. 3, 6, 12).
        - specific toggles (risk_table? p-values? confidence intervals?)
     3. Extract the 'data_payload' (The Data). 
        - Reconstruct the dataset needed to re-plot this. 
@@ -152,6 +154,8 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
                 journal_theme: { type: Type.STRING, enum: ["NEJM", "LANCET", "NATURE", "JCO", "Simple"] },
                 custom_palette: { type: Type.ARRAY, items: { type: Type.STRING } },
                 aspect_ratio: { type: Type.NUMBER },
+                font_family: { type: Type.STRING, enum: ["Arial", "Times New Roman", "Courier", "Helvetica"] },
+                break_time_by: { type: Type.NUMBER },
                 legend_position: { type: Type.STRING },
                 // Union fields
                 risk_table: {
