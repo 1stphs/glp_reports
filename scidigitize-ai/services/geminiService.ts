@@ -586,5 +586,5 @@ export const autoParseVisualElement = async (
   // Step 2: Specialized Extraction
   const result = await processVisualElement(file, type, contextText, globalContext);
 
-  return result;
+  return { ...result, classificationReason: reason };
 };

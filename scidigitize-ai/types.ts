@@ -41,6 +41,7 @@ export interface ExtractedRStatData {
   data_payload: any; // Flexible payload depending on chart type (e.g., array of objects)
   confidence: number;
   summary: string;
+  classificationReason?: string;
 }
 
 // --- 2. Standard Chart Data ---
@@ -62,6 +63,7 @@ export interface ExtractedChartData {
 
   confidence: number;
   summary: string;
+  classificationReason?: string;
 }
 
 // --- 3. Table Data ---
@@ -72,6 +74,7 @@ export interface ExtractedTableData {
   rows: string[][]; // Simple cell text, row by row
   confidence: number;
   summary: string;
+  classificationReason?: string;
 }
 
 // --- 4. Infographic Data ---
@@ -82,6 +85,7 @@ export interface ExtractedInfographicData {
   keyPoints: string[]; // List of key takeaways
   detailedDescription: string; // Markdown supported description of the mechanism
   confidence: number;
+  classificationReason?: string;
 }
 
 export type ExtractedData = ExtractedRStatData | ExtractedChartData | ExtractedTableData | ExtractedInfographicData;

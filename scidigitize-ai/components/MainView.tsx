@@ -72,7 +72,7 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
   // If document is idle, show the "Start Parsing" card instead of the Dashboard
   if ((selectedFile.type === 'pdf' || selectedFile.type === 'document') && selectedFile.mineruStatus === 'idle') {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-50/50">
+      <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-8 bg-slate-50/50">
         <div className="flex flex-col items-center max-w-2xl w-full bg-white p-12 rounded-2xl border border-slate-200 shadow-sm border-dashed">
           <div className="w-24 h-24 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
             <FileText className="w-12 h-12 text-indigo-600" />
@@ -163,7 +163,17 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
     }
 
     if (dataType === 'r_stat') {
-      return <RChartRenderer data={activeResult as any} />;
+      return activeTab === 'visual' ? (
+        <RChartRenderer data={activeResult as any} />
+      ) : (
+        <div className="h-full">
+          <DataTable
+            data={(activeResult as any).dataPoints || (activeResult as any).data_payload}
+            xAxisLabel={(activeResult as any).xAxisLabel || 'X'}
+            yAxisLabel={(activeResult as any).yAxisLabel || 'Y'}
+          />
+        </div>
+      );
     }
 
     // Charts have two tabs
@@ -277,6 +287,14 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
                 <div className="p-4 bg-slate-50 border-t border-slate-100 text-sm text-slate-600 border-l-4 border-indigo-500 max-h-32 overflow-y-auto">
                   <span className="font-semibold text-slate-700 block mb-1">Context:</span>
                   {viewingSubItem.context}
+                </div>
+              )}
+              {activeResult?.classificationReason && (
+                <div className="p-4 bg-indigo-50 border-t border-indigo-100 text-xs text-indigo-800 border-l-4 border-indigo-400">
+                  <span className="font-bold flex items-center gap-2 mb-1">
+                    <Sparkles className="w-3 h-3" /> AI Classification Logic
+                  </span>
+                  {activeResult.classificationReason}
                 </div>
               )}
             </div>
