@@ -97,65 +97,95 @@ export const detectChartsInPage = async (base64Image: string): Promise<DetectedI
 };
 
 // 2a. Extraction: R-Grade Statistics (Configuration over Code)
+// Helper Interface for Step 1
+interface ChartStructure {
+  groups: Array<{ name: string; color: string }>;
+  axis: { x_label: string; x_ticks: number[]; y_label: string; y_ticks: number[] };
+  has_risk_table: boolean;
+}
+
+// Step 1: Structure Discovery (The "Architect")
+const detectChartStructure = async (ai: GoogleGenAI, base64Data: string): Promise<ChartStructure> => {
+  const structurePrompt = `
+    Analyze this Kaplan-Meier curve. Identify the STRUCTURAL SKELETON only. DO NOT extract data points yet.
+    
+    1. **GROUPS**: List every group name in the legend and its EXACT HEX color line.
+    2. **AXIS**: List the visual X-axis ticks (e.g. 0, 3, 6...) and Y-axis ticks.
+    3. **risk_table**: Is there a table of numbers below the X-axis? (True/False).
+    
+    Output JSON:
+    {
+      "groups": [{ "name": "string", "color": "#HEX" }],
+      "axis": { "x_label": "string", "x_ticks": [numbers], "y_label": "string", "y_ticks": [numbers] },
+      "has_risk_table": boolean
+    }
+  `;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-pro-image-preview",
+    contents: { parts: [{ inlineData: { mimeType: "image/png", data: base64Data } }, { text: structurePrompt }] },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          groups: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, color: { type: Type.STRING } } } },
+          axis: { type: Type.OBJECT, properties: { x_label: { type: Type.STRING }, x_ticks: { type: Type.ARRAY, items: { type: Type.NUMBER } }, y_label: { type: Type.STRING }, y_ticks: { type: Type.ARRAY, items: { type: Type.NUMBER } } } },
+          has_risk_table: { type: Type.BOOLEAN }
+        }
+      }
+    }
+  });
+  return JSON.parse(response.text || "{}");
+};
+
+// Main Function (Orchestrator)
 export const analyzeRStatImage = async (file: File, contextText?: string, globalContext?: string): Promise<ExtractedRStatData> => {
   if (!process.env.API_KEY) throw new Error("API Key missing");
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const base64Data = await fileToGenerativePart(file);
 
+  // Phase 1: Structure Discovery
+  const structure = await detectChartStructure(ai, base64Data);
+  console.log("Phase 1 Structure:", structure);
+
+  // Phase 2: Targeted Extraction (The "Digitizer")
+  // We inject the structure into the prompt to "Guide" the AI
+  const extractionPrompt = `
+    You are a Scientific Chart Digitization Engine.
+    
+    I have already analyzed the structure of this chart:
+    - **Confirmed Groups**: ${JSON.stringify(structure.groups)}
+    - **Axis Calibration**: X-Axis Ticks: ${JSON.stringify(structure.axis.x_ticks)}, Y-Axis Ticks: ${JSON.stringify(structure.axis.y_ticks)}
+    - **Risk Table Present**: ${structure.has_risk_table} (IGNORE THESE NUMBERS FOR COORDINATES)
+    
+    YOUR TASK: Extract the raw data points for EACH of the ${structure.groups.length} groups listed above.
+    
+    PROTOCOL:
+    1. For Group 1 ("${structure.groups[0]?.name}"), trace the ${structure.groups[0]?.color} line.
+       - Events (Drops): { time: X, status: 1, strata: "${structure.groups[0]?.name}" }
+       - Censors (Ticks): { time: X, status: 0, strata: "${structure.groups[0]?.name}" }
+    2. Repeat for ALL other groups.
+    3. Extract Annotations (Text inside plot).
+    
+    OUTPUT JSON (Strict Schema):
+    - chartType: "survival"
+    - style_config: Must include 'custom_palette' matching the detected colors: ${JSON.stringify(structure.groups.map(g => g.color))}
+    - data_payload: Array of ALL data points from ALL groups.
+  `;
+
   const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT: "${globalContext}"` : "";
   const localCtx = contextText ? `\nLOCAL CAPTION: "${contextText}"` : "";
 
-  const prompt = `
-    You are a Scientific Chart Digitization Engine. Your goal is to extract the underlying RAW DATA from this Kaplan-Meier curve with PIXEL-PERFECT ACCURACY.
-    
-    CONTEXT:
-    ${globalCtx}
-    ${localCtx}
-    
-    CRITICAL INSTRUCTION - COORDINATE SYSTEMS:
-    This image likely contains TWO sets of numbers at the bottom:
-    1. The **X-AXIS** (Time in Months): Usually 0, 3, 6, 9, 12... (Visual Ticks).
-    2. The **RISK TABLE**: Rows of integers aligned below the axis (e.g. 50, 48, 30...).
-    **YOU MUST IGNORE THE RISK TABLE FOR DATA COORDINATES.** 
-    ONLY Use the visual X-Axis ticks and Y-Axis (0-100%) for mapping the curve points.
-    
-    STEP-BY-STEP EXTRACTION PROTOCOL:
-    
-    1. **AXIS CALIBRATION**
-       - Identify the Main Plot Area.
-       - Read the VISUAL X-axis ticks (e.g. 0 to 18).
-       - Read the VISUAL Y-axis ticks (e.g. 0 to 100).
-    
-    2. **LEGEND & COLOR IDENTIFICATION**
-       - Identify each group in the legend.
-       - Extract the EXACT HEX COLOR used for its line.
-       - Example: "Tarlatamab" -> "#004080".
-    
-    3. **DATA TRACING (PIXEL-TO-DATA MAPPING)**
-       - A Kaplan-Meier curve is a series of **steps** (drops).
-       - For EACH group, scan the line from Left (Time 0) to Right:
-         - **Events (Drops)**: Record a point \`{ time: X, status: 1 }\` where the line drops vertically.
-         - **Censoring (Ticks)**: Record a point \`{ time: X, status: 0 }\` where you see a small vertical tick mark.
-         - **Curve Sampling**: If the line is curved/smooth, extract points every ~0.5 units of X to capture the shape.
-       - **DENSITY**: Extract at least 30-50 points per group for high fidelity.
-    
-    4. **ANNOTATION RECOVERY**
-       - Extract ALL text floating inside the plot area (e.g. "Median OS: 13.6", "HR: 0.65", "53%", "40%").
-       - Assign them accurate X/Y coordinates in the data space.
-    
-    OUTPUT JSON:
-    - \`chartType\`: "survival"
-    - \`style_config\`: Include \`custom_palette\`, \`break_time_by\` (axis interval), \`text_annotations\`, \`risk_table\` (set show: true if present).
-    - \`data_payload\`: The array of \`{time, status, strata}\` objects.
-  `;
+  const finalPrompt = extractionPrompt + `\nCONTEXT:\n${globalCtx}\n${localCtx}`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview", // Upgrade to Pro for better extraction
+      model: "gemini-3-pro-image-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
-          { text: prompt }
+          { text: finalPrompt }
         ]
       },
       config: {
@@ -200,12 +230,11 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
                     type: Type.OBJECT,
                     properties: {
                       text: { type: Type.STRING },
-                      x: { type: Type.NUMBER, description: "Data coordinate X" },
-                      y: { type: Type.NUMBER, description: "Data coordinate Y" },
+                      x: { type: Type.NUMBER },
+                      y: { type: Type.NUMBER },
                       size: { type: Type.NUMBER }
                     }
-                  },
-                  nullable: true
+                  }
                 },
                 reference_lines: {
                   type: Type.ARRAY,
@@ -215,45 +244,33 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
                       axis: { type: Type.STRING, enum: ["x", "y"] },
                       value: { type: Type.NUMBER },
                       color: { type: Type.STRING },
-                      linetype: { type: Type.STRING, enum: ["dashed", "dotted", "solid"] }
+                      linetype: { type: Type.STRING }
                     }
-                  },
-                  nullable: true
-                },
-                censoring_mark: { type: Type.STRING },
-                sort_direction: { type: Type.STRING },
-                ref_line: { type: Type.NUMBER },
-                ci_style: { type: Type.STRING },
-                flow_type: { type: Type.STRING }
+                  }
+                }
               },
-              nullable: true
+              required: ["journal_theme"]
             },
             data_payload: {
               type: Type.ARRAY,
-              description: "Raw data array",
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  x: { type: Type.NUMBER, nullable: true },
-                  y: { type: Type.NUMBER, nullable: true },
-                  group: { type: Type.STRING, nullable: true },
-                  series: { type: Type.STRING, nullable: true },
-                  time: { type: Type.NUMBER, nullable: true },
-                  status: { type: Type.NUMBER, nullable: true }, // Survival
-                  estimate: { type: Type.NUMBER, nullable: true }, // Forest
-                  low: { type: Type.NUMBER, nullable: true },
-                  high: { type: Type.NUMBER, nullable: true },
-                  p_val: { type: Type.NUMBER, nullable: true },
-                  gene_symbol: { type: Type.STRING, nullable: true }, // Volcano
-                  log2FC: { type: Type.NUMBER, nullable: true },
-                  label: { type: Type.STRING, nullable: true }
-                }
+                  time: { type: Type.NUMBER },
+                  status: { type: Type.NUMBER },
+                  strata: { type: Type.STRING },
+                  // For forest/other plots
+                  mean: { type: Type.NUMBER },
+                  lower: { type: Type.NUMBER },
+                  upper: { type: Type.NUMBER },
+                  label: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
+                },
+                required: ["time", "status"]
               }
-            },
-            confidence: { type: Type.NUMBER },
-            summary: { type: Type.STRING }
+            }
           },
-          required: ["dataType", "chartType", "style_config", "data_payload", "confidence"]
+          required: ["dataType", "chartType", "style_config", "data_payload"]
         }
       }
     });
