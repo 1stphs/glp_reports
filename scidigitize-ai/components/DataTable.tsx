@@ -8,6 +8,7 @@ interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ data, xAxisLabel, yAxisLabel }) => {
+  if (!data) return null;
   return (
     <div className="overflow-hidden border border-slate-200 rounded-lg">
       <div className="overflow-y-auto max-h-[700px]">

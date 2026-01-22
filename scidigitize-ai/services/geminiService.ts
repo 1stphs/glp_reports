@@ -106,30 +106,47 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
   const localCtx = contextText ? `\nLOCAL CAPTION: "${contextText}"` : "";
 
   const prompt = `
-    You are a Senior Bio-Statistician. Your goal is to digitize this medical chart into a Configuration Object for an R Template Engine.
+    You are a Scientific Chart Digitization Engine. Your goal is to extract the underlying RAW DATA from this Kaplan-Meier curve with PIXEL-PERFECT ACCURACY.
     
     CONTEXT:
     ${globalCtx}
     ${localCtx}
     
-    TASK:
-    1. Identify the 'chartType' from this list: 'survival', 'forest', 'waterfall', 'nomogram', 'group_comparison', 'roc', 'volcano', 'swimmer', 'sankey'.
-    2. Extract the 'style_config' (Visual Design Tokens). Focus on:
-       - journal_theme (NEJM/LANCET/NATURE style?)
-       - custom_palette: EXTRACT EXACT HEX CODES from the image for each series (e.g. ["#E69F00", "#56B4E9"]).
-       - aspect_ratio: Estimate the width/height ratio.
-       - font_family: 'Arial' (sans) or 'Times New Roman' (serif)?
-       - break_time_by: The interval between X-axis ticks (e.g. 3, 6, 12).
-       - specific toggles (risk_table? p-values? confidence intervals?)
-       - text_annotations: Extract any floating text on the plot (e.g. "Median OS: 13.6", "HR: 0.65") with their approx relative X/Y position (0-1 scale).
-       - reference_lines: Extract dashed lines indicating median survival (50%) or specific timepoints.
-    3. Extract the 'data_payload' (The Data). 
-       - CRITICAL: You must separate data by LEGEND GROUP. Do NOT group as "All".
-       - Example: If legend has "Chemo" and "Tarlatamab", your data array must have entries for BOTH groups.
-       - Reconstruct the dataset with HIGH DENSITY (many points to form a smooth curve). 
-       - For Survival: time, status, strata (MUST match legend names).
-
-    OUTPUT JSON conforming to the schema.
+    CRITICAL INSTRUCTION - COORDINATE SYSTEMS:
+    This image likely contains TWO sets of numbers at the bottom:
+    1. The **X-AXIS** (Time in Months): Usually 0, 3, 6, 9, 12... (Visual Ticks).
+    2. The **RISK TABLE**: Rows of integers aligned below the axis (e.g. 50, 48, 30...).
+    **YOU MUST IGNORE THE RISK TABLE FOR DATA COORDINATES.** 
+    ONLY Use the visual X-Axis ticks and Y-Axis (0-100%) for mapping the curve points.
+    
+    STEP-BY-STEP EXTRACTION PROTOCOL:
+    
+    1. **AXIS CALIBRATION**
+       - Identify the Main Plot Area.
+       - Read the VISUAL X-axis ticks (e.g. 0 to 18).
+       - Read the VISUAL Y-axis ticks (e.g. 0 to 100).
+    
+    2. **LEGEND & COLOR IDENTIFICATION**
+       - Identify each group in the legend.
+       - Extract the EXACT HEX COLOR used for its line.
+       - Example: "Tarlatamab" -> "#004080".
+    
+    3. **DATA TRACING (PIXEL-TO-DATA MAPPING)**
+       - A Kaplan-Meier curve is a series of **steps** (drops).
+       - For EACH group, scan the line from Left (Time 0) to Right:
+         - **Events (Drops)**: Record a point \`{ time: X, status: 1 }\` where the line drops vertically.
+         - **Censoring (Ticks)**: Record a point \`{ time: X, status: 0 }\` where you see a small vertical tick mark.
+         - **Curve Sampling**: If the line is curved/smooth, extract points every ~0.5 units of X to capture the shape.
+       - **DENSITY**: Extract at least 30-50 points per group for high fidelity.
+    
+    4. **ANNOTATION RECOVERY**
+       - Extract ALL text floating inside the plot area (e.g. "Median OS: 13.6", "HR: 0.65", "53%", "40%").
+       - Assign them accurate X/Y coordinates in the data space.
+    
+    OUTPUT JSON:
+    - \`chartType\`: "survival"
+    - \`style_config\`: Include \`custom_palette\`, \`break_time_by\` (axis interval), \`text_annotations\`, \`risk_table\` (set show: true if present).
+    - \`data_payload\`: The array of \`{time, status, strata}\` objects.
   `;
 
   try {
@@ -236,7 +253,7 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
             confidence: { type: Type.NUMBER },
             summary: { type: Type.STRING }
           },
-          required: ["dataType", "chartType", "confidence"]
+          required: ["dataType", "chartType", "style_config", "data_payload", "confidence"]
         }
       }
     });
@@ -255,8 +272,8 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const base64Data = await fileToGenerativePart(file);
 
-  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT (Title/Abstract):\n"${globalContext}"` : "";
-  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT (Caption & Surrounding Text):\n"${contextText}"` : "";
+  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT(Title / Abstract): \n"${globalContext}"` : "";
+  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT(Caption & Surrounding Text): \n"${contextText}"` : "";
 
   const prompt = `
     Analyze the provided scientific chart with HIGH PRECISION.
@@ -264,17 +281,17 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
     CONTEXT INFORMATION:
     ${globalCtx}
     ${localCtx}
-    
-    INSTRUCTIONS:
-    1. **Data Extraction**: Reconstruct the X/Y dataset. If points have specific text labels (e.g. "Control", "Treated"), extract them.
-    2. **Auxiliary Elements (CRITICAL)**: 
-       - Identify REFERENCE LINES (e.g., "Limit of Detection", "Baseline", dashed lines).
-       - Identify ANNOTATIONS (e.g., "p < 0.05", "***", "Max Value", arrows pointing to specific areas).
-       - Identify the exact visual style of lines (dashed vs solid).
-    3. **High-Fidelity Style**:
-       - Extract precise HEX COLORS for each series (e.g. ["#E69F00", "#56B4E9"]).
-       - Estimate the Aspect Ratio (Width / Height).
-    4. **Axis Calibration**: Use the local context to determine the exact unit and scale (linear vs log).
+
+  INSTRUCTIONS:
+  1. ** Data Extraction **: Reconstruct the X / Y dataset.If points have specific text labels(e.g. "Control", "Treated"), extract them.
+    2. ** Auxiliary Elements(CRITICAL) **:
+  - Identify REFERENCE LINES(e.g., "Limit of Detection", "Baseline", dashed lines).
+       - Identify ANNOTATIONS(e.g., "p < 0.05", "***", "Max Value", arrows pointing to specific areas).
+       - Identify the exact visual style of lines(dashed vs solid).
+    3. ** High - Fidelity Style **:
+  - Extract precise HEX COLORS for each series(e.g. ["#E69F00", "#56B4E9"]).
+       - Estimate the Aspect Ratio(Width / Height).
+    4. ** Axis Calibration **: Use the local context to determine the exact unit and scale(linear vs log).
 
     Output the result in the specified JSON format.
   `;
@@ -390,8 +407,8 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const base64Data = await fileToGenerativePart(file);
 
-  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT (Title/Abstract):\n"${globalContext}"` : "";
-  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT (Caption & Surrounding Text):\n"${contextText}"` : "";
+  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT(Title / Abstract): \n"${globalContext}"` : "";
+  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT(Caption & Surrounding Text): \n"${contextText}"` : "";
 
   // Optimized prompt for complex tables
   const prompt = `
@@ -400,8 +417,8 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
     ${localCtx}
 
     HANDLING COMPLEX TABLES:
-    - Use context to expand abbreviations in headers.
-    - If the table has merged headers or sub-headers, try to flatten them into a single descriptive header row.
+  - Use context to expand abbreviations in headers.
+    - If the table has merged headers or sub - headers, try to flatten them into a single descriptive header row.
     - Ensure row alignment is preserved.
     - Treat empty cells as empty strings.
     
@@ -453,8 +470,8 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const base64Data = await fileToGenerativePart(file);
 
-  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT (Title/Abstract):\n"${globalContext}"` : "";
-  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT (Caption & Surrounding Text):\n"${contextText}"` : "";
+  const globalCtx = globalContext ? `\nGLOBAL PAPER CONTEXT(Title / Abstract): \n"${globalContext}"` : "";
+  const localCtx = contextText ? `\nLOCAL PAGE CONTEXT(Caption & Surrounding Text): \n"${contextText}"` : "";
 
   const prompt = `
     Analyze this scientific infographic / diagram.
@@ -462,7 +479,7 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
     ${localCtx}
     
     Your goal is to explain the MECHANISM, PROCESS, or STRUCTURE depicted.
-    - Do not try to extract X/Y data points.
+    - Do not try to extract X / Y data points.
     - Focus on arrows, labels, flow, and relationships between elements.
     - Use the context to properly name proteins, molecules, or steps.
     - Provide a detailed Markdown description.
@@ -517,7 +534,7 @@ export const classifyVisualElement = async (file: File, contextText?: string): P
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const base64Data = await fileToGenerativePart(file);
 
-  const contextPrompt = contextText ? `\nCONTEXT (Caption/Text nearby): "${contextText}"` : "";
+  const contextPrompt = contextText ? `\nCONTEXT(Caption / Text nearby): "${contextText}"` : "";
 
   const prompt = `
     Analyze this scientific image crop.
@@ -525,19 +542,19 @@ export const classifyVisualElement = async (file: File, contextText?: string): P
 
     Your task is to CLASSIFY this image into exactly one of these 4 categories to determine the correct extraction pipeline.
     
-    CRITICAL DISTINCTION (R_STAT vs STANDARD_CHART):
-    - If the chart contains ANY statistical annotations (p-values, HR, Confidence Intervals, Risk Tables) or is a specific medical type (Kaplan-Meier, Forest, Waterfall), you MUST classify as 'r_stat'.
-    - 'standard_chart' is strictly for basic, raw data visualization (Bar/Line/Scatter) without statistical inference markers.
+    CRITICAL DISTINCTION(R_STAT vs STANDARD_CHART):
+  - If the chart contains ANY statistical annotations(p - values, HR, Confidence Intervals, Risk Tables) or is a specific medical type(Kaplan - Meier, Forest, Waterfall), you MUST classify as 'r_stat'.
+  - 'standard_chart' is strictly for basic, raw data visualization(Bar / Line / Scatter) without statistical inference markers.
 
     CATEGORIES:
-    1. 'r_stat' (Medical/Statistical Charts) -> Requires High-Fidelity R-Reconstruction.
-    2. 'complex_table' (Data Tables) -> Requires Structural Table Extraction.
-    3. 'standard_chart' (Basic Plots) -> Requires Standard Data Point Extraction.
-    4. 'infographic' (Diagrams/Schemas) -> Requires Semantic Description.
+  1. 'r_stat'(Medical / Statistical Charts) -> Requires High - Fidelity R - Reconstruction.
+    2. 'complex_table'(Data Tables) -> Requires Structural Table Extraction.
+    3. 'standard_chart'(Basic Plots) -> Requires Standard Data Point Extraction.
+    4. 'infographic'(Diagrams / Schemas) -> Requires Semantic Description.
 
     Output a JSON object with keys:
-    - type: One of ["r_stat", "complex_table", "standard_chart", "infographic"]
-    - reason: A precise explanation citing visual features (e.g. "Contains risk table below x-axis").
+  - type: One of["r_stat", "complex_table", "standard_chart", "infographic"]
+    - reason: A precise explanation citing visual features(e.g. "Contains risk table below x-axis").
   `;
 
   try {
@@ -593,7 +610,7 @@ export const processVisualElement = async (
     case 'infographic':
       return analyzeInfographicImage(file, contextText, globalContext);
     default:
-      throw new Error(`Unknown visual classification type: ${type}`);
+      throw new Error(`Unknown visual classification type: ${type} `);
   }
 };
 
@@ -609,7 +626,7 @@ export const autoParseVisualElement = async (
 ): Promise<ExtractedData> => {
   // Step 1: Accurate Classification
   const { type, reason } = await classifyVisualElement(file, contextText);
-  console.log(`Auto-detected type: ${type} (${reason})`);
+  console.log(`Auto - detected type: ${type} (${reason})`);
 
   // Step 2: Specialized Extraction
   const result = await processVisualElement(file, type, contextText, globalContext);
