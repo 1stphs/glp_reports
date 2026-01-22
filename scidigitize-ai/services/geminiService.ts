@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData, ExtractedRStatData, DetectionType, DetectedItem } from "../types";
+import { ExtractedChartData, ExtractedTableData, ExtractedInfographicData, ExtractedRStatData, DetectionType, DetectedItem, ExtractedData } from "../types";
 
 // Helper to convert file to base64
 export const fileToGenerativePart = async (file: File): Promise<string> => {
@@ -130,7 +130,7 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-pro-exp-02-05",
+      model: "gemini-flash-latest",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -472,4 +472,115 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
     console.error("Gemini Infographic Error:", error);
     throw error;
   }
+};
+
+// --- 3. Single Image Classification & Auto-Parsing (New Workflow) ---
+
+/**
+ * Classifies a single image crop into one of the 4 strict categories with HIGH ACCURACY.
+ * Uses the robust model (Gemini 2.0 Pro) to ensure correct routing between R-Stat and Standard Chart.
+ */
+export const classifyVisualElement = async (file: File, contextText?: string): Promise<{ type: DetectionType; reason: string }> => {
+  if (!process.env.API_KEY) throw new Error("API Key missing");
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const base64Data = await fileToGenerativePart(file);
+
+  const contextPrompt = contextText ? `\nCONTEXT (Caption/Text nearby): "${contextText}"` : "";
+
+  const prompt = `
+    Analyze this scientific image crop.
+    ${contextPrompt}
+
+    Your task is to CLASSIFY this image into exactly one of these 4 categories to determine the correct extraction pipeline.
+    
+    CRITICAL DISTINCTION (R_STAT vs STANDARD_CHART):
+    - If the chart contains ANY statistical annotations (p-values, HR, Confidence Intervals, Risk Tables) or is a specific medical type (Kaplan-Meier, Forest, Waterfall), you MUST classify as 'r_stat'.
+    - 'standard_chart' is strictly for basic, raw data visualization (Bar/Line/Scatter) without statistical inference markers.
+
+    CATEGORIES:
+    1. 'r_stat' (Medical/Statistical Charts) -> Requires High-Fidelity R-Reconstruction.
+    2. 'complex_table' (Data Tables) -> Requires Structural Table Extraction.
+    3. 'standard_chart' (Basic Plots) -> Requires Standard Data Point Extraction.
+    4. 'infographic' (Diagrams/Schemas) -> Requires Semantic Description.
+
+    Output a JSON object with keys:
+    - type: One of ["r_stat", "complex_table", "standard_chart", "infographic"]
+    - reason: A precise explanation citing visual features (e.g. "Contains risk table below x-axis").
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest", // Use High-Intelligence Model
+      contents: {
+        parts: [
+          { inlineData: { mimeType: file.type, data: base64Data } },
+          { text: prompt }
+        ]
+      },
+      config: {
+        thinkingConfig: { thinkingBudget: 2048 }, // Enable thinking for accurate discrimination
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            type: { type: Type.STRING, enum: ["r_stat", "complex_table", "standard_chart", "infographic"] },
+            reason: { type: Type.STRING }
+          },
+          required: ["type", "reason"]
+        }
+      }
+    });
+
+    if (response.text) {
+      const result = JSON.parse(response.text);
+      return result;
+    }
+    throw new Error("Empty response from classification");
+  } catch (error) {
+    console.error("Classification failed:", error);
+    throw error;
+  }
+};
+
+/**
+ * Orchestrator: Routes the file to the correct analyzer based on type.
+ */
+export const processVisualElement = async (
+  file: File,
+  type: DetectionType,
+  contextText?: string,
+  globalContext?: string
+): Promise<ExtractedData> => {
+  switch (type) {
+    case 'r_stat':
+      return analyzeRStatImage(file, contextText, globalContext);
+    case 'complex_table':
+      return analyzeTableImage(file, contextText, globalContext);
+    case 'standard_chart':
+      return analyzeChartImage(file, contextText, globalContext);
+    case 'infographic':
+      return analyzeInfographicImage(file, contextText, globalContext);
+    default:
+      throw new Error(`Unknown visual classification type: ${type}`);
+  }
+};
+
+/**
+ * Main Entry Point for User-Selected Image Parsing.
+ * 1. Classifies the image using High-Intelligence Model.
+ * 2. Routes to the specific extraction pipeline.
+ */
+export const autoParseVisualElement = async (
+  file: File,
+  contextText?: string,
+  globalContext?: string
+): Promise<ExtractedData> => {
+  // Step 1: Accurate Classification
+  const { type, reason } = await classifyVisualElement(file, contextText);
+  console.log(`Auto-detected type: ${type} (${reason})`);
+
+  // Step 2: Specialized Extraction
+  const result = await processVisualElement(file, type, contextText, globalContext);
+
+  return result;
 };

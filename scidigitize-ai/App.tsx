@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import MainView from './components/MainView';
 import { FileItem, SubItem } from './types';
-import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage, analyzeRStatImage } from './services/geminiService';
+import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage, analyzeRStatImage, autoParseVisualElement } from './services/geminiService';
 import { uploadFileToTos } from './services/tosService';
 import { triggerCustomMineruParsing } from './services/mineruCustomService';
 import { processMineruDirectResponse } from './services/mineruResultHandler';
@@ -224,37 +224,28 @@ const App: React.FC = () => {
 
     for (const item of itemsToProcess) {
       try {
-        let result;
-        switch (item.type) {
-          case 'r_stat':
-            result = await analyzeRStatImage(item.file, item.context, globalContext);
-            break;
-          case 'standard_chart':
-            result = await analyzeChartImage(item.file, item.context, globalContext);
-            break;
-          case 'table':
-          case 'complex_table':
-            result = await analyzeTableImage(item.file, item.context, globalContext);
-            break;
-          case 'infographic':
-            result = await analyzeInfographicImage(item.file, item.context, globalContext);
-            break;
-          default:
-            result = await analyzeChartImage(item.file, item.context, globalContext);
-            break;
-        }
+        // --- UPDATED LOGIC FOR OPTION 2 ---
+        // Instead of switching by pre-defined type, we call the Auto-Parser.
+        // It will Classify -> Then Extract using the High-Intelligence Model.
+        const result = await autoParseVisualElement(item.file, item.context, globalContext);
 
         setFiles(prev => prev.map(f => {
           if (f.id === fileId && f.subItems) {
             return {
               ...f,
-              subItems: f.subItems.map(sub => sub.id === item.id ? { ...sub, status: 'completed', result } : sub)
+              subItems: f.subItems.map(sub => sub.id === item.id ? {
+                ...sub,
+                status: 'completed',
+                type: result.dataType as any, // Update the type based on what AI found
+                result
+              } : sub)
             };
           }
           return f;
         }));
 
       } catch (error) {
+        console.error("Auto Parse Failed for item:", item.id, error);
         setFiles(prev => prev.map(f => {
           if (f.id === fileId && f.subItems) {
             return {
