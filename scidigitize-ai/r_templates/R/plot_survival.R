@@ -113,10 +113,33 @@ draw_survival_plot <- function(config_list) {
     legend.labs = levels(factor(raw_df$strata)),
     
     # Axis
+    # Axis
     xlab = "Time",
     ylab = "Survival Probability",
     break.time.by = break_time_by
   )
+
+  # 6. Add Dynamic Annotations (Text & Lines)
+  if (!is.null(style$text_annotations) && length(style$text_annotations) > 0) {
+    for (anno in style$text_annotations) {
+       # Use annotation_custom or annotate
+       # annotate() is easier for data coordinates
+       p$plot <- p$plot + annotate("text", x = anno$x, y = anno$y, label = anno$text, size = if(!is.null(anno$size)) anno$size else 5)
+    }
+  }
+
+  if (!is.null(style$reference_lines) && length(style$reference_lines) > 0) {
+    for (ref in style$reference_lines) {
+       color <- if(!is.null(ref$color)) ref$color else "black"
+       linetype <- if(!is.null(ref$linetype)) ref$linetype else "dashed"
+       
+       if (ref$axis == "x") {
+         p$plot <- p$plot + geom_vline(xintercept = ref$value, linetype = linetype, color = color)
+       } else {
+         p$plot <- p$plot + geom_hline(yintercept = ref$value, linetype = linetype, color = color)
+       }
+    }
+  }
   
   return(p)
 }

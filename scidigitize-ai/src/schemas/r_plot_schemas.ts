@@ -7,6 +7,19 @@ export interface BaseStyleConfig {
     font_family?: string;
     legend_position?: 'top' | 'bottom' | 'right' | 'none';
     aspect_ratio?: number; // e.g. 1.6 for wide, 0.8 for tall
+    break_time_by?: number;
+    text_annotations?: Array<{
+        text: string;
+        x: number;
+        y: number;
+        size?: number;
+    }>;
+    reference_lines?: Array<{
+        axis: 'x' | 'y';
+        value: number;
+        color?: string;
+        linetype?: 'dashed' | 'dotted' | 'solid';
+    }>;
 }
 
 // --- Module 1: Survival ---

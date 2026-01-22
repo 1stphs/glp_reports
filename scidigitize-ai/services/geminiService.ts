@@ -117,22 +117,24 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
     2. Extract the 'style_config' (Visual Design Tokens). Focus on:
        - journal_theme (NEJM/LANCET/NATURE style?)
        - custom_palette: EXTRACT EXACT HEX CODES from the image for each series (e.g. ["#E69F00", "#56B4E9"]).
-       - aspect_ratio: Estimate the width/height ratio (e.g. 1.5 for landscape, 0.8 for portrait).
+       - aspect_ratio: Estimate the width/height ratio.
        - font_family: 'Arial' (sans) or 'Times New Roman' (serif)?
        - break_time_by: The interval between X-axis ticks (e.g. 3, 6, 12).
        - specific toggles (risk_table? p-values? confidence intervals?)
+       - text_annotations: Extract any floating text on the plot (e.g. "Median OS: 13.6", "HR: 0.65") with their approx relative X/Y position (0-1 scale).
+       - reference_lines: Extract dashed lines indicating median survival (50%) or specific timepoints.
     3. Extract the 'data_payload' (The Data). 
-       - Reconstruct the dataset needed to re-plot this. 
-       - For Survival: time, status, strata.
-       - For Forest: variable, estimate, low, high, p_val.
-       - For Volcano: log2FC, p_value, gene_symbol.
-       
+       - CRITICAL: You must separate data by LEGEND GROUP. Do NOT group as "All".
+       - Example: If legend has "Chemo" and "Tarlatamab", your data array must have entries for BOTH groups.
+       - Reconstruct the dataset with HIGH DENSITY (many points to form a smooth curve). 
+       - For Survival: time, status, strata (MUST match legend names).
+
     OUTPUT JSON conforming to the schema.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-flash-latest",
+      model: "gemini-3-pro-image-preview", // Upgrade to Pro for better extraction
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -172,6 +174,32 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
                   properties: {
                     show: { type: Type.BOOLEAN },
                     coord: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                  },
+                  nullable: true
+                },
+                text_annotations: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      text: { type: Type.STRING },
+                      x: { type: Type.NUMBER, description: "Data coordinate X" },
+                      y: { type: Type.NUMBER, description: "Data coordinate Y" },
+                      size: { type: Type.NUMBER }
+                    }
+                  },
+                  nullable: true
+                },
+                reference_lines: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      axis: { type: Type.STRING, enum: ["x", "y"] },
+                      value: { type: Type.NUMBER },
+                      color: { type: Type.STRING },
+                      linetype: { type: Type.STRING, enum: ["dashed", "dotted", "solid"] }
+                    }
                   },
                   nullable: true
                 },
@@ -253,7 +281,7 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-pro-image-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
