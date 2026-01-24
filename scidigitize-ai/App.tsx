@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import MainView from './components/MainView';
-import { FileItem, SubItem } from './types';
+import { FileItem, SubItem, DetectionType } from './types';
 import { analyzeChartImage, analyzeTableImage, analyzeInfographicImage, detectChartsInPage, analyzeRStatImage, autoParseVisualElement } from './services/geminiService';
 import { uploadFileToTos } from './services/tosService';
 import { triggerCustomMineruParsing } from './services/mineruCustomService';
@@ -167,7 +167,7 @@ const App: React.FC = () => {
   };
 
   // Process single image manual trigger
-  const handleStartImageAnalysis = async (fileId: string) => {
+  const handleStartImageAnalysis = async (fileId: string, forceType?: DetectionType) => {
     const item = files.find(f => f.id === fileId);
     if (!item) return;
 
@@ -175,9 +175,13 @@ const App: React.FC = () => {
     setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'processing' } : f));
 
     try {
-      const result = await analyzeChartImage(item.file, item.context);
+      // Use autoParseVisualElement for unified classification/extraction
+      // Pass the manual override if provided by UI
+      const result = await autoParseVisualElement(item.file, item.context, undefined, forceType);
+
       setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'completed', result } : f));
     } catch (error) {
+      console.error("Image Analysis Failed", error);
       setFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: 'error', errorMessage: 'Failed' } : f));
     } finally {
       setIsProcessing(false);

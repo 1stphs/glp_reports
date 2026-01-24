@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileItem, SubItem } from '../types';
+import { FileItem, SubItem, DetectionType } from '../types';
 import ChartVisualizer from './ChartVisualizer';
 import DataTable from './DataTable';
 import GenericDataTable from './GenericDataTable';
@@ -13,15 +13,17 @@ interface MainViewProps {
   onStartDigitization: () => void;
   onProcessPdfItems: (fileId: string, subItemIds: string[]) => void;
   onStartMineruParse: (fileId: string) => void;
-  onStartImageAnalysis: (fileId: string) => void;
+  onStartImageAnalysis: (fileId: string, forceType?: DetectionType) => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, onProcessPdfItems, onStartMineruParse, onStartImageAnalysis }) => {
   const [activeTab, setActiveTab] = useState<'visual' | 'data' | 'json'>('visual');
   const [viewingSubItem, setViewingSubItem] = useState<SubItem | null>(null);
+  const [manualType, setManualType] = useState<DetectionType | null>(null);
 
   useEffect(() => {
     setViewingSubItem(null);
+    setManualType(null);
   }, [selectedFile?.id]);
 
   if (!selectedFile) {
@@ -345,8 +347,28 @@ const MainView: React.FC<MainViewProps> = ({ selectedFile, onStartDigitization, 
             {selectedFile && selectedFile.type === 'image' && (
               <div className="flex flex-col items-center max-w-2xl w-full">
                 <img src={selectedFile.previewUrl} className="max-h-[400px] rounded-lg shadow-md mb-8 border border-slate-200" alt="Preview" />
+                <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setManualType(null)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${!manualType ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Auto Detect
+                  </button>
+                  <button
+                    onClick={() => setManualType('r_stat')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${manualType === 'r_stat' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    R-Grade Stats
+                  </button>
+                  <button
+                    onClick={() => setManualType('standard_chart')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${manualType === 'standard_chart' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Standard Chart
+                  </button>
+                </div>
                 <button
-                  onClick={() => onStartImageAnalysis(selectedFile.id)}
+                  onClick={() => onStartImageAnalysis(selectedFile.id, manualType || undefined)}
                   className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg hover:shadow-indigo-200 transition-all hover:-translate-y-1"
                 >
                   <Play className="w-5 h-5 fill-current" />

@@ -104,12 +104,43 @@ interface ChartStructure {
   has_risk_table: boolean;
 }
 
+// Helper to safely parse JSON and log raw text on error
+const safeJSONParse = (text: string, context: string) => {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error(`[Gemini] JSON Parse Error in ${context}:`, e);
+    console.log(`[Gemini] Raw Text (${context}):`, text);
+    // Attempt rudimentary repair for common truncation (very basic)
+    if (e instanceof SyntaxError && e.message.includes("Unterminated string")) {
+      console.warn("Attempting to repair truncated JSON...");
+      // Try closing the string and object/array if simple
+      try {
+        return JSON.parse(text + '"}');
+      } catch (e2) {
+        try { return JSON.parse(text + '"]'); } catch (e3) {
+          try { return JSON.parse(text + '}'); } catch (e4) {
+            try { return JSON.parse(text + ']'); } catch (e5) { }
+          }
+        }
+      }
+    }
+    throw e;
+  }
+};
+
 // Step 1: Structure Discovery (The "Architect")
 const detectChartStructure = async (ai: GoogleGenAI, base64Data: string): Promise<ChartStructure> => {
   const structurePrompt = `
-    Analyze this Kaplan-Meier curve. Identify the STRUCTURAL SKELETON only. DO NOT extract data points yet.
+    Analyze this Kaplan-Meier curve. Identify the STRUCTURAL SKELETON only.
     
-    1. **GROUPS**: List every group name in the legend and its EXACT HEX color line.
+    CRITICAL INSTRUCTION - AVOID HALLUCINATION LOOPS:
+    - When extracting "groups", extract ONLY the group name (e.g. "Treatment A", "Placebo").
+    - DO NOT include statistics like "Median PFS", "HR", "95% CI", "p=" in the group name.
+    - If the text is long, TRUNCATE it to the first 50 characters.
+    - NEVER repeat the same text multiple times.
+    
+    1. **GROUPS**: List every group name using the rules above, and its EXACT HEX color line.
     2. **AXIS**: List the visual X-axis ticks (e.g. 0, 3, 6...) and Y-axis ticks.
     3. **risk_table**: Is there a table of numbers below the X-axis? (True/False).
     
@@ -122,9 +153,10 @@ const detectChartStructure = async (ai: GoogleGenAI, base64Data: string): Promis
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-pro-image-preview",
+    model: "gemini-2.0-flash-exp",
     contents: { parts: [{ inlineData: { mimeType: "image/png", data: base64Data } }, { text: structurePrompt }] },
     config: {
+      maxOutputTokens: 8192,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -136,7 +168,9 @@ const detectChartStructure = async (ai: GoogleGenAI, base64Data: string): Promis
       }
     }
   });
-  return JSON.parse(response.text || "{}");
+
+  const text = (response.text || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+  return safeJSONParse(text, "detectChartStructure");
 };
 
 // Main Function (Orchestrator)
@@ -155,16 +189,16 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
     You are a Scientific Chart Digitization Engine.
     
     I have already analyzed the structure of this chart:
-    - **Confirmed Groups**: ${JSON.stringify(structure.groups)}
-    - **Axis Calibration**: X-Axis Ticks: ${JSON.stringify(structure.axis.x_ticks)}, Y-Axis Ticks: ${JSON.stringify(structure.axis.y_ticks)}
-    - **Risk Table Present**: ${structure.has_risk_table} (IGNORE THESE NUMBERS FOR COORDINATES)
+    - **Confirmed Groups**: ${JSON.stringify(structure.groups || [])}
+    - **Axis Calibration**: X-Axis Ticks: ${JSON.stringify(structure.axis?.x_ticks || [])}, Y-Axis Ticks: ${JSON.stringify(structure.axis?.y_ticks || [])}
+    - **Risk Table Present**: ${structure.has_risk_table || false} (IGNORE THESE NUMBERS FOR COORDINATES)
     
-    YOUR TASK: Extract the raw data points for EACH of the ${structure.groups.length} groups listed above.
+    YOUR TASK: Extract the raw data points for EACH of the ${(structure.groups || []).length} groups listed above.
     
     PROTOCOL:
-    1. For Group 1 ("${structure.groups[0]?.name}"), trace the ${structure.groups[0]?.color} line.
-       - Events (Drops): { time: X, status: 1, strata: "${structure.groups[0]?.name}" }
-       - Censors (Ticks): { time: X, status: 0, strata: "${structure.groups[0]?.name}" }
+    1. For Group 1 ("${(structure.groups || [])[0]?.name || 'Series 1'}"), trace the ${(structure.groups || [])[0]?.color || 'black'} line.
+       - Events (Drops): { time: X, status: 1, strata: "${(structure.groups || [])[0]?.name || 'Series 1'}" }
+       - Censors (Ticks): { time: X, status: 0, strata: "${(structure.groups || [])[0]?.name || 'Series 1'}" }
     2. Repeat for ALL other groups.
     3. Extract Annotations (Text inside plot).
     
@@ -181,7 +215,7 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: "gemini-2.0-flash-exp",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -189,7 +223,7 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
         ]
       },
       config: {
-        thinkingConfig: { thinkingBudget: 4096 },
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -276,7 +310,8 @@ export const analyzeRStatImage = async (file: File, contextText?: string, global
     });
 
     if (!response.text) throw new Error("No response");
-    return JSON.parse(response.text);
+    const text = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return safeJSONParse(text, "analyzeRStatImage Phase 2");
   } catch (error) {
     console.error("Gemini R-Stat Error:", error);
     throw error;
@@ -315,7 +350,7 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: "gemini-2.0-flash-exp",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -323,7 +358,7 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
         ]
       },
       config: {
-        thinkingConfig: { thinkingBudget: 4096 },
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -402,7 +437,8 @@ export const analyzeChartImage = async (file: File, contextText?: string, global
     });
 
     if (!response.text) throw new Error("No response");
-    const result = JSON.parse(response.text);
+    const text = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const result = safeJSONParse(text, "analyzeChartImage");
     const processedPoints = result.dataPoints.map((p: any) => {
       const numX = parseFloat(p.x);
       return { ...p, x: !isNaN(numX) && p.x.trim() !== "" && !p.x.match(/[a-zA-Z]/) ? numX : p.x };
@@ -444,7 +480,7 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-2.0-flash-exp",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -452,7 +488,7 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
         ]
       },
       config: {
-        thinkingConfig: { thinkingBudget: 4096 },
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -473,7 +509,7 @@ export const analyzeTableImage = async (file: File, contextText?: string, global
     });
 
     if (!response.text) throw new Error("No response");
-    const result = JSON.parse(response.text);
+    const result = safeJSONParse(response.text.replace(/```json/g, '').replace(/```/g, '').trim(), "analyzeTableImage");
     return { ...result, dataType: 'table' };
   } catch (error) {
     console.error("Gemini Table Error:", error);
@@ -506,7 +542,7 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-2.0-flash-exp",
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -514,7 +550,7 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
         ]
       },
       config: {
-        thinkingConfig: { thinkingBudget: 4096 },
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -532,7 +568,7 @@ export const analyzeInfographicImage = async (file: File, contextText?: string, 
     });
 
     if (!response.text) throw new Error("No response");
-    const result = JSON.parse(response.text);
+    const result = safeJSONParse(response.text.replace(/```json/g, '').replace(/```/g, '').trim(), "analyzeInfographicImage");
     return { ...result, dataType: 'infographic' };
   } catch (error) {
     console.error("Gemini Infographic Error:", error);
@@ -576,7 +612,7 @@ export const classifyVisualElement = async (file: File, contextText?: string): P
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-flash-latest", // Use High-Intelligence Model
+      model: "gemini-2.0-flash-exp", // Use High-Intelligence Model
       contents: {
         parts: [
           { inlineData: { mimeType: file.type, data: base64Data } },
@@ -584,7 +620,8 @@ export const classifyVisualElement = async (file: File, contextText?: string): P
         ]
       },
       config: {
-        thinkingConfig: { thinkingBudget: 2048 }, // Enable thinking for accurate discrimination
+        maxOutputTokens: 8192,
+        // Enable thinking for accurate discrimination - removed for stability
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -598,7 +635,8 @@ export const classifyVisualElement = async (file: File, contextText?: string): P
     });
 
     if (response.text) {
-      const result = JSON.parse(response.text);
+      const text = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const result = safeJSONParse(text, "classifyVisualElement");
       return result;
     }
     throw new Error("Empty response from classification");
@@ -639,11 +677,22 @@ export const processVisualElement = async (
 export const autoParseVisualElement = async (
   file: File,
   contextText?: string,
-  globalContext?: string
+  globalContext?: string,
+  forceType?: DetectionType
 ): Promise<ExtractedData> => {
-  // Step 1: Accurate Classification
-  const { type, reason } = await classifyVisualElement(file, contextText);
-  console.log(`Auto - detected type: ${type} (${reason})`);
+  let type: DetectionType;
+  let reason = "Manual Override";
+
+  if (forceType) {
+    type = forceType;
+    console.log(`Manual override type: ${type}`);
+  } else {
+    // Step 1: Accurate Classification
+    const classification = await classifyVisualElement(file, contextText);
+    type = classification.type;
+    reason = classification.reason;
+    console.log(`Auto-detected type: ${type} (${reason})`);
+  }
 
   // Step 2: Specialized Extraction
   const result = await processVisualElement(file, type, contextText, globalContext);
