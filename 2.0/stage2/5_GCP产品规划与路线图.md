@@ -24,7 +24,7 @@ GLP产品已验证我们的AI在高合规、非标场景下的工业级能力，
 
 ### 1. GCP产品规划多维度表格
 
-| 维度 | Clinical Insights（Tier 1） | IND Builder（前期重点产品） | PV Report Pro（Tier 2） | QA Guardian（Tier 2） | RegDoc Enterprise（Enterprise） |
+| 维度 | Medical Insights（Tier 1） | IND Builder（前期重点产品） | PV Report Pro（Tier 2） | QA Guardian（Tier 2） | RegDoc Enterprise（Enterprise） |
 |------|-----------------------------|-----------------------------|-------------------------|-----------------------|---------------------------------|
 | **目标客户** | 中小biotech临床决策者 | 已使用GLP的CRO/Biotech注册部门 | PV部门 | QA/医学部门 | 临床注册部门 + 集团总部 |
 | **核心功能** | 实时TFL生成 + 疗效/安全性简报<br>Virtual SD基础版 | IND/NDA资料重整审核<br>临床前资料自动导入<br>监管沟通PPT生成 | SAE/SUSAR规范化报告<br>质疑生成 + Argus对比<br>deadline提醒 | 临床QA稽查 + SOP体系构建<br>文档质量审查 | 完整IND/NDA资料构建 + 医学文档创建审查（方案/IB/ICF） |
